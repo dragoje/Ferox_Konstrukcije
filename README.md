@@ -45,6 +45,20 @@ npm start
 
 Za detaljne instrukcije instalacije, pogledaj [INSTALACIJA.md](./INSTALACIJA.md)
 
+## Email Konfiguracija
+
+Za slanje email-a sa kontakt forme, potrebno je podesiti Resend API ključ:
+
+1. Kreiraj nalog na [Resend.com](https://resend.com) (besplatno do 3000 emaila/mesec)
+2. Idi u API Keys sekciju i kreiraj novi API ključ
+3. Kreiraj `.env.local` fajl u `website` folderu:
+   ```
+   RESEND_API_KEY=re_tvoj_api_kljuc_ovde
+   ```
+4. Restartuj development server
+
+**Napomena:** Email će se slati na `nikolaslavkovic95@gmail.com` kada korisnik pošalje formu "Traži ponudu".
+
 ## Pakovanje
 
 Za instrukcije kako da upakuješ projekat, pogledaj [PAKOVANJE.md](./PAKOVANJE.md)

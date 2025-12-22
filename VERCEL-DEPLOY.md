@@ -94,14 +94,20 @@ Za production deploy:
 vercel --prod
 ```
 
-## Environment Variables (Opciono)
+## Environment Variables
 
-Ako u budućnosti dodaš environment varijable (npr. za email servis):
+**VAŽNO:** Za slanje email-a sa kontakt forme, potrebno je podesiti Resend API ključ:
 
-1. Idi u Vercel Dashboard → Tvoj projekat → Settings → Environment Variables
-2. Dodaj varijable:
-   - `RESEND_API_KEY` (ako koristiš Resend za email)
-   - ili druge varijable koje su potrebne
+1. Kreiraj nalog na [Resend.com](https://resend.com) (besplatno do 3000 emaila/mesec)
+2. Idi u API Keys sekciju i kreiraj novi API ključ
+3. Idi u Vercel Dashboard → Tvoj projekat → Settings → Environment Variables
+4. Dodaj varijablu:
+   - **Key:** `RESEND_API_KEY`
+   - **Value:** Tvoj Resend API ključ (počinje sa `re_`)
+   - **Environment:** Production, Preview, Development (ili samo Production)
+5. Redeploy projekat (ili sačekaš sledeći deploy)
+
+**Napomena:** Email će se slati na `nikolaslavkovic95@gmail.com` kada korisnik pošalje formu "Traži ponudu".
 
 ## Automatski Deploy
 
