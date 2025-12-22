@@ -46,7 +46,7 @@ export default function Kontakt() {
                   <h3 className="font-semibold mb-1">Adresa</h3>
                   <p className="text-gray-600">
                     Nikole Tesle 175/2<br />
-                    Cacak, 32200<br />
+                    Čačak, 32000<br />
                   </p>
                 </div>
               </div>
@@ -73,8 +73,8 @@ export default function Kontakt() {
                 loading="lazy"
                 allowFullScreen
                 referrerPolicy="no-referrer-when-downgrade"
-                src="https://www.google.com/maps?q=Nikole+Tesle+175/2,+Cacak,+32200,+Serbia&output=embed"
-                title="Lokacija - Nikole Tesle 175/2, Cacak"
+                src="https://www.google.com/maps?q=Ferox+Konstrukcije,+Nikole+Tesle+175/2,+Čačak+32000,+Serbia&output=embed"
+                title="Ferox Konstrukcije - Nikole Tesle 175/2, Čačak"
               />
             </div>
           </div>
