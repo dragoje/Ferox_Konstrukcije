@@ -10,7 +10,7 @@ export default function Home() {
             Profesionalne Hale i Metalne Konstrukcije
           </h1>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Izrađujemo hale po meri sa najkvalitetnijim materijalima i stručnom montažom
+            Izrađujemo hale po meri sa najkvalitetnijim materijalima koje se lako montiraju
           </p>
           <div className="flex gap-4 justify-center">
             <Link
