@@ -45,9 +45,10 @@ export default function Footer() {
           <div>
             <h3 className="text-xl font-bold mb-4">Kontakt</h3>
             <ul className="space-y-2 text-gray-400">
-              <li>📧 Email: info@ferox.rs</li>
-              <li>📞 Telefon: +381 XX XXX XXXX</li>
-              <li>📍 Adresa: [Vaša adresa]</li>
+              <li>📧 Email: nikolaslavkovic95@gmail.com</li>
+              <li>📞 Telefon: +381 64 473 9990</li>
+              <li>📍 Adresa: Nikole Tesle 175/2<br />
+                    Cacak, 32200<br /></li>
             </ul>
           </div>
         </div>

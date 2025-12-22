@@ -24,8 +24,8 @@ export default function Kontakt() {
                 <div className="text-2xl mr-4">📧</div>
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>
-                  <a href="mailto:info@ferox.rs" className="text-red-700 hover:text-red-800 hover:underline transition-colors">
-                    info@ferox.rs
+                  <a href="mailto:nikolaslavkovic95@gmail.com" className="text-red-700 hover:text-red-800 hover:underline transition-colors">
+                    nikolaslavkovic95@gmail.com
                   </a>
                 </div>
               </div>
@@ -34,8 +34,8 @@ export default function Kontakt() {
                 <div className="text-2xl mr-4">📞</div>
                 <div>
                   <h3 className="font-semibold mb-1">Telefon</h3>
-                  <a href="tel:+381XXXXXXXXX" className="text-red-700 hover:text-red-800 hover:underline transition-colors">
-                    +381 XX XXX XXXX
+                  <a href="tel:+381644739990" className="text-red-700 hover:text-red-800 hover:underline transition-colors">
+                    +381 64 473 9990
                   </a>
                 </div>
               </div>
@@ -45,8 +45,8 @@ export default function Kontakt() {
                 <div>
                   <h3 className="font-semibold mb-1">Adresa</h3>
                   <p className="text-gray-600">
-                    [Vaša adresa]<br />
-                    [Grad, Poštanski broj]
+                    Nikole Tesle 175/2<br />
+                    Cacak, 32200<br />
                   </p>
                 </div>
               </div>
