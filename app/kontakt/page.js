@@ -64,9 +64,18 @@ export default function Kontakt() {
               </div>
             </div>
 
-            {/* Map placeholder */}
-            <div className="bg-gray-200 rounded-lg h-64 flex items-center justify-center">
-              <p className="text-gray-500">Mapa će biti prikazana ovde</p>
+            {/* Map */}
+            <div className="rounded-lg overflow-hidden shadow-lg h-64">
+              <iframe
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                src="https://www.google.com/maps?q=Nikole+Tesle+175/2,+Cacak,+32200,+Serbia&output=embed"
+                title="Lokacija - Nikole Tesle 175/2, Cacak"
+              />
             </div>
           </div>
 
