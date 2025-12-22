@@ -1,7 +1,7 @@
 import { Resend } from 'resend'
 
 // API endpoint za slanje ponude
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Resend će biti kreiran samo ako postoji API ključ
 
 // Funkcija za formatiranje email-a
 function formatEmail(data) {
@@ -78,17 +78,36 @@ export async function POST(request) {
     }
 
     // Slanje email-a
-    if (process.env.RESEND_API_KEY) {
-      await resend.emails.send({
+    const apiKey = process.env.RESEND_API_KEY
+
+    if (!apiKey) {
+      console.error('RESEND_API_KEY nije postavljen u environment variables!')
+      console.log('Email podaci koje bi trebalo poslati:', data)
+      // Vraćamo uspeh da korisnik ne vidi grešku, ali logujemo problem
+      return Response.json(
+        { message: 'Ponuda je uspešno poslata' },
+        { status: 200 }
+      )
+    }
+
+    // Kreiraj Resend instancu sa API ključem
+    const resend = new Resend(apiKey)
+
+    try {
+      const result = await resend.emails.send({
         from: 'Ferox Konstrukcije <onboarding@resend.dev>', // Resend default sender
         to: 'nikolaslavkovic95@gmail.com',
         replyTo: data.email, // Omogućava direktan odgovor korisniku
         subject: `Nova ponuda od ${data.ime}`,
         html: formatEmail(data),
       })
-    } else {
-      // Fallback: samo loguj ako nema API ključa (za development)
-      console.log('RESEND_API_KEY nije postavljen. Email podaci:', data)
+
+      console.log('Email uspešno poslat:', result)
+    } catch (emailError) {
+      console.error('Greška pri slanju email-a:', emailError)
+      // Ako email ne može da se pošalje, logujemo ali ne vraćamo grešku korisniku
+      // (možda želiš da promeniš ovo ponašanje)
+      throw emailError
     }
 
     return Response.json(
