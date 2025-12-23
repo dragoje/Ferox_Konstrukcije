@@ -94,9 +94,13 @@ export async function POST(request) {
     const resend = new Resend(apiKey)
 
     try {
+      // Koristi verifikovani domen ako je postavljen, inače fallback na test email
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'Ferox Konstrukcije <onboarding@resend.dev>'
+      const toEmail = process.env.RESEND_TO_EMAIL || 'timotijevicdragoje@gmail.com'
+
       const result = await resend.emails.send({
-        from: 'Ferox Konstrukcije <onboarding@resend.dev>', // Resend default sender
-        to: 'nikolaslavkovic95@gmail.com',
+        from: fromEmail,
+        to: toEmail,
         replyTo: data.email, // Omogućava direktan odgovor korisniku
         subject: `Nova ponuda od ${data.ime}`,
         html: formatEmail(data),

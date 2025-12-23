@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import jsPDF from 'jspdf'
 import Shed3DVisualization from './Shed3DVisualization'
 
@@ -207,6 +208,24 @@ const ANKER_PLOCA_CENA = {
 }
 
 export default function Kalkulator() {
+  // --- Admin Mode Check ---
+  const searchParams = useSearchParams()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    // Proveri URL parametar
+    const adminParam = searchParams.get('admin')
+    if (adminParam === 'dzoni') {
+      setIsAdmin(true)
+      // Sačuvaj u localStorage
+      localStorage.setItem('kalkulator_admin', 'true')
+    } else {
+      // Proveri localStorage
+      const savedAdmin = localStorage.getItem('kalkulator_admin')
+      setIsAdmin(savedAdmin === 'true')
+    }
+  }, [searchParams])
+
   // --- Šupa parametri ---
   const [width, setWidth] = useState(5)
   const [length, setLength] = useState(6)
@@ -669,10 +688,12 @@ export default function Kalkulator() {
               <option value={2}>Dve vode</option>
             </select>
           </label>
-          <label className="flex flex-col">
-            Cena po kg (€/kg)
-            <input type="number" className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900" value={pricePerKg} onChange={e => setPricePerKg(parseFloat(e.target.value) || 0)} />
-          </label>
+          {isAdmin && (
+            <label className="flex flex-col">
+              Cena po kg (€/kg)
+              <input type="number" className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900" value={pricePerKg} onChange={e => setPricePerKg(parseFloat(e.target.value) || 0)} />
+            </label>
+          )}
           <label className="flex flex-col">
             Površina hale (m²):
             <div className="flex items-center h-full min-h-[0px]">
@@ -871,7 +892,7 @@ export default function Kalkulator() {
               <li>Broj stubova: {calculations.brojStubova}</li>
               <li>Razmak između stubova: {calculations.brojBindera > 1 ? formatPrice(length / (calculations.brojBindera - 1)) : formatPrice(0)} m</li>
               <li>Težina po stubu: {calculations.tezinaStuba} kg</li>
-              <li>Ukupna težina: {calculations.ukupnaTezinaStubova.toFixed(2)} kg</li>
+              {isAdmin && <li>Ukupna težina: {calculations.ukupnaTezinaStubova.toFixed(2)} kg</li>}
               <li>Ukupna cena: {formatPrice(calculations.ukupnaCenaStubova)} €</li>
             </ul>
           </div>
@@ -880,7 +901,7 @@ export default function Kalkulator() {
             <ul className="space-y-1">
               <li>Broj bindera: {calculations.brojBindera}</li>
               <li>Težina: {calculations.tezinaBindera} kg</li>
-              <li>Ukupna težina: {calculations.ukupnaTezinaBindera.toFixed(2)} kg</li>
+              {isAdmin && <li>Ukupna težina: {calculations.ukupnaTezinaBindera.toFixed(2)} kg</li>}
               <li>Cena: {formatPrice(calculations.ukupnaCenaBindera)} €</li>
             </ul>
           </div>
@@ -889,16 +910,20 @@ export default function Kalkulator() {
             <ul className="space-y-1">
               <li>Ukupno metara: {calculations.ukupanBrojRoznjaca} m</li>
               <li>Težina po metru: {calculations.tezinaRoznjace} kg</li>
-              <li>Ukupna težina: {calculations.ukupnaTezinaRoznjaca.toFixed(2)} kg</li>
+              {isAdmin && <li>Ukupna težina: {calculations.ukupnaTezinaRoznjaca.toFixed(2)} kg</li>}
               <li>Cena po metru: {calculations.cenaRoznjace} €</li>
               <li>Cena: {formatPrice(calculations.ukupnaCenaRoznjaca)} €</li>
             </ul>
           </div>
           <div className="p-4 col-span-full bg-gray-100 rounded-md shadow-sm font-bold text-lg text-gray-800">
-            Cena po metru kvadratnom: {formatPrice(calculations.cenaPoMetru)} €/m2
-            <br />
-            Ukupna težina: {formatPrice(calculations.ukupnaTezina)} kg
-            <br />
+            {isAdmin && (
+              <>
+                Cena po metru kvadratnom: {formatPrice(calculations.cenaPoMetru)} €/m2
+                <br />
+                Ukupna težina: {formatPrice(calculations.ukupnaTezina)} kg
+                <br />
+              </>
+            )}
             {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 ? (
               <>
                 Cena konstrukcije: {formatPrice(calculations.ukupnaCenaBezAnkerPloca)} € + Anker ploča: {formatPrice(calculations.ukupnaCenaAnkerPloca)} € = Ukupna cena: {formatPrice(calculations.ukupnaCena)} €
@@ -911,7 +936,7 @@ export default function Kalkulator() {
           </div>
         </div>
         <div className="mt-6 flex justify-center">
-          <button
+          {isAdmin && <button
             onClick={exportToPDF}
             className="px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg shadow-md hover:bg-gray-800 transition-colors duration-200 flex items-center gap-2"
           >
@@ -919,7 +944,7 @@ export default function Kalkulator() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             Izvezi u PDF
-          </button>
+          </button>}
         </div>
       </section>
 
@@ -947,7 +972,8 @@ export default function Kalkulator() {
       <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Ponuda</h2>
-          <button
+          {isAdmin && <button
+            key="copy-ponuda"
             onClick={copyPonudaToClipboard}
             className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center gap-2"
           >
@@ -955,7 +981,7 @@ export default function Kalkulator() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
             {copiedNotification ? 'Kopirano!' : 'Kopiraj ponudu'}
-          </button>
+          </button>}
         </div>
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
           <div className="space-y-4 text-sm leading-relaxed whitespace-pre-line">
@@ -1000,8 +1026,9 @@ export default function Kalkulator() {
         </div>
       </section>
 
-      <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-4">Dodatni troškovi: Kalkulacija</h2>
+      {isAdmin && (
+        <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-semibold mb-4">Dodatni troškovi: Kalkulacija</h2>
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <label className="flex flex-col">
@@ -1048,10 +1075,12 @@ export default function Kalkulator() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Ostali parametri */}
-      <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-4">Ostali parametri</h2>
+      {isAdmin && (
+        <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-semibold mb-4">Ostali parametri</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <label className="flex flex-col">
             Cena materijala po kg (€/kg)
@@ -1078,6 +1107,7 @@ export default function Kalkulator() {
           </label>
         </div>
       </section>
+      )}
     </div>
   )
 }
