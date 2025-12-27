@@ -659,7 +659,7 @@ export default function Kalkulator() {
                 setWidth(newWidth)
               }}
             >
-              {Array.from({ length: 15 }, (_, i) => 5 + i * 0.5).map(val => (
+              {Array.from({ length: 8 }, (_, i) => 5 + i).map(val => (
                 <option key={val} value={val}>{val}m</option>
               ))}
             </select>
@@ -776,11 +776,11 @@ export default function Kalkulator() {
           <div className="mb-4">
             <label className="flex flex-col">
               Broj bindera
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
                 <input
                   type="number"
                   min="1"
-                  className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                  className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full sm:w-auto"
                   value={finalBrojBindera}
                   onChange={e => {
                     const value = parseInt(e.target.value) || 1
@@ -792,10 +792,12 @@ export default function Kalkulator() {
                   onClick={() => {
                     setBrojBindera(null) // Reset to calculated value
                   }}
-                  className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+                  className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
                   title="Koristi predloženu vrednost"
                 >
-                  Predlog: {suggestedBrojBindera}
+                  <span className="hidden sm:inline">Predlog: </span>
+                  <span className="sm:hidden">Predlog </span>
+                  {suggestedBrojBindera}
                 </button>
               </div>
               <p className="text-xs text-gray-500 mt-1">
@@ -885,37 +887,40 @@ export default function Kalkulator() {
       {/* Rezultati */}
       <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold mb-4">Rezultati</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="p-4 bg-gray-50 rounded-md shadow-sm">
-            <h3 className="font-semibold mb-2">Stubovi</h3>
-            <ul className="space-y-1">
-              <li>Broj stubova: {calculations.brojStubova}</li>
-              <li>Razmak između stubova: {calculations.brojBindera > 1 ? formatPrice(length / (calculations.brojBindera - 1)) : formatPrice(0)} m</li>
-              <li>Težina po stubu: {calculations.tezinaStuba} kg</li>
-              {isAdmin && <li>Ukupna težina: {calculations.ukupnaTezinaStubova.toFixed(2)} kg</li>}
-              <li>Ukupna cena: {formatPrice(calculations.ukupnaCenaStubova)} €</li>
-            </ul>
+        {isAdmin && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <div className="p-4 bg-gray-50 rounded-md shadow-sm">
+              <h3 className="font-semibold mb-2">Stubovi</h3>
+              <ul className="space-y-1">
+                <li>Broj stubova: {calculations.brojStubova}</li>
+                <li>Razmak između stubova: {calculations.brojBindera > 1 ? formatPrice(length / (calculations.brojBindera - 1)) : formatPrice(0)} m</li>
+                <li>Težina po stubu: {calculations.tezinaStuba} kg</li>
+                <li>Ukupna težina: {calculations.ukupnaTezinaStubova.toFixed(2)} kg</li>
+                <li>Ukupna cena: {formatPrice(calculations.ukupnaCenaStubova)} €</li>
+              </ul>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-md shadow-sm">
+              <h3 className="font-semibold mb-2">Binderi</h3>
+              <ul className="space-y-1">
+                <li>Broj bindera: {calculations.brojBindera}</li>
+                <li>Težina: {calculations.tezinaBindera} kg</li>
+                <li>Ukupna težina: {calculations.ukupnaTezinaBindera.toFixed(2)} kg</li>
+                <li>Cena: {formatPrice(calculations.ukupnaCenaBindera)} €</li>
+              </ul>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-md shadow-sm">
+              <h3 className="font-semibold mb-2">Rožnjače</h3>
+              <ul className="space-y-1">
+                <li>Ukupno metara: {calculations.ukupanBrojRoznjaca} m</li>
+                <li>Težina po metru: {calculations.tezinaRoznjace} kg</li>
+                <li>Ukupna težina: {calculations.ukupnaTezinaRoznjaca.toFixed(2)} kg</li>
+                <li>Cena po metru: {calculations.cenaRoznjace} €</li>
+                <li>Cena: {formatPrice(calculations.ukupnaCenaRoznjaca)} €</li>
+              </ul>
+            </div>
           </div>
-          <div className="p-4 bg-gray-50 rounded-md shadow-sm">
-            <h3 className="font-semibold mb-2">Binderi</h3>
-            <ul className="space-y-1">
-              <li>Broj bindera: {calculations.brojBindera}</li>
-              <li>Težina: {calculations.tezinaBindera} kg</li>
-              {isAdmin && <li>Ukupna težina: {calculations.ukupnaTezinaBindera.toFixed(2)} kg</li>}
-              <li>Cena: {formatPrice(calculations.ukupnaCenaBindera)} €</li>
-            </ul>
-          </div>
-          <div className="p-4 bg-gray-50 rounded-md shadow-sm">
-            <h3 className="font-semibold mb-2">Rožnjače</h3>
-            <ul className="space-y-1">
-              <li>Ukupno metara: {calculations.ukupanBrojRoznjaca} m</li>
-              <li>Težina po metru: {calculations.tezinaRoznjace} kg</li>
-              {isAdmin && <li>Ukupna težina: {calculations.ukupnaTezinaRoznjaca.toFixed(2)} kg</li>}
-              <li>Cena po metru: {calculations.cenaRoznjace} €</li>
-              <li>Cena: {formatPrice(calculations.ukupnaCenaRoznjaca)} €</li>
-            </ul>
-          </div>
-          <div className="p-4 col-span-full bg-gray-100 rounded-md shadow-sm font-bold text-lg text-gray-800">
+        )}
+        <div className="p-4 bg-gray-100 rounded-md shadow-sm font-bold text-lg text-gray-800">
             {isAdmin && (
               <>
                 Cena po metru kvadratnom: {formatPrice(calculations.cenaPoMetru)} €/m2
@@ -934,7 +939,6 @@ export default function Kalkulator() {
               </>
             )}
           </div>
-        </div>
         <div className="mt-6 flex justify-center">
           {isAdmin && <button
             onClick={exportToPDF}
