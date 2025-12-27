@@ -635,51 +635,81 @@ export default function Kalkulator() {
         <h2 className="text-2xl font-semibold mb-4">Parametri hale</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <label className="flex flex-col">
-            Dužina (m)
+            <div className="flex justify-between items-center mb-2">
+              <span>Dužina (m)</span>
+              <span className="text-lg font-semibold text-gray-900">{length}m</span>
+            </div>
             <input
-              type="number"
-              step="1"
+              type="range"
               min="1"
-              max="5000"
-              className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              max="100"
+              step="1"
               value={length}
               onChange={e => {
-                const newLength = parseFloat(e.target.value) || 0
+                const newLength = parseFloat(e.target.value) || 1
                 setLength(newLength)
               }}
-            />
-          </label>
-          <label className="flex flex-col">
-            Širina (m)
-            <input
-              type="number"
-              step="1"
-              min="5"
-              max="15"
-              className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-              value={width}
-              onChange={e => {
-                const newWidth = parseFloat(e.target.value) || 0
-                setWidth(newWidth)
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              style={{
+                background: `linear-gradient(to right, #1a1a1a 0%, #1a1a1a ${((length - 1) / (100 - 1)) * 100}%, #e5e7eb ${((length - 1) / (100 - 1)) * 100}%, #e5e7eb 100%)`
               }}
             />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>1m</span>
+              <span>100m</span>
+            </div>
+          </label>
+          <label className="flex flex-col">
+            <div className="flex justify-between items-center mb-2">
+              <span>Širina (m)</span>
+              <span className="text-lg font-semibold text-gray-900">{width}m</span>
+            </div>
+            <input
+              type="range"
+              min="5"
+              max="12"
+              step="0.5"
+              value={width}
+              onChange={e => {
+                const newWidth = parseFloat(e.target.value) || 5
+                setWidth(newWidth)
+              }}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              style={{
+                background: `linear-gradient(to right, #1a1a1a 0%, #1a1a1a ${((width - 5) / (15 - 5)) * 100}%, #e5e7eb ${((width - 5) / (15 - 5)) * 100}%, #e5e7eb 100%)`
+              }}
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>5m</span>
+              <span>15m</span>
+            </div>
           </label>
 
           <label className="flex flex-col">
-            Visina (m)
+            <div className="flex justify-between items-center mb-2">
+              <span>Visina (m)</span>
+              <span className="text-lg font-semibold text-gray-900">{height}m</span>
+            </div>
             <input
-              type="number"
-              step="0.5"
+              type="range"
               min="2.5"
               max="6"
-              className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              step="0.5"
               value={height}
               onChange={e => {
-                const newHeight = parseFloat(e.target.value) || 0
+                const newHeight = parseFloat(e.target.value) || 2.5
                 setHeight(newHeight)
                 setSelectedStubIndex(0) // Resetuj izbor stuba kada se promeni visina
               }}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+              style={{
+                background: `linear-gradient(to right, #1a1a1a 0%, #1a1a1a ${((height - 2.5) / (6 - 2.5)) * 100}%, #e5e7eb ${((height - 2.5) / (6 - 2.5)) * 100}%, #e5e7eb 100%)`
+              }}
             />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>2.5m</span>
+              <span>6m</span>
+            </div>
           </label>
           <label className="flex flex-col">
             Pad krova
