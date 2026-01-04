@@ -2,11 +2,24 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      {/* Background Image with low opacity */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: 'url(/background-metal.jpg.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed',
+          opacity: 0.25
+        }}
+      />
+      <div className="relative z-10">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-20">
+      <section className="bg-gradient-to-r from-gray-900/60 to-gray-800/60 text-white py-20 relative backdrop-blur-sm">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">
+          <h1 className="text-5xl font-bold mb-6 text-white">
             Profesionalne Hale i Metalne Konstrukcije
           </h1>
           <p className="text-xl mb-8 max-w-2xl mx-auto">
@@ -15,22 +28,22 @@ export default function Home() {
           <div className="flex gap-4 justify-center">
             <Link
               href="/kalkulator"
-              className="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              className="bg-red-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-800 transition-colors"
             >
               Kalkulator Cena
             </Link>
             <Link
-              href="/kontakt"
+              href="/proizvodi"
               className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-900 transition-colors"
             >
-              Kontaktirajte Nas
+              Naši Proizvodi
             </Link>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50/60 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Zašto Izabrati Nas?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -60,7 +73,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gray-900 text-white">
+      <section className="py-16 bg-gray-900/60 text-white backdrop-blur-sm">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Spremni za Vaš Projekat?</h2>
           <p className="text-xl mb-8 text-gray-300">
@@ -74,6 +87,7 @@ export default function Home() {
           </Link>
         </div>
       </section>
+      </div>
     </div>
   )
 }

@@ -243,6 +243,7 @@ export default function Kalkulator() {
   // --- Stubovi ---
   const [selectedStubIndex, setSelectedStubIndex] = useState(0)
   const [includeAnkerPloca, setIncludeAnkerPloca] = useState(false)
+  const [includeAnkerSraf, setIncludeAnkerSraf] = useState(false)
 
   // Funkcija koja određuje dužinu stuba na osnovu visine hale
   const getStubLengthFromShedHeight = (shedHeight) => {
@@ -319,11 +320,11 @@ export default function Kalkulator() {
   // --- Broj bindera (editable) ---
   const [brojBindera, setBrojBindera] = useState(null) // null means use calculated value
 
-  // Izračunaj predloženi broj bindera
-  const suggestedBrojBindera = Math.ceil(length / 4) + 1
+  // Izračunaj predloženi broj bindera (minimum 2)
+  const suggestedBrojBindera = Math.max(2, Math.ceil(length / 4) + 1)
 
-  // Koristi korisnikov unos ili predloženu vrednost
-  const finalBrojBindera = brojBindera !== null ? brojBindera : suggestedBrojBindera
+  // Koristi korisnikov unos ili predloženu vrednost (minimum 2)
+  const finalBrojBindera = Math.max(2, brojBindera !== null ? brojBindera : suggestedBrojBindera)
 
   // Kada se promeni dužina, ažuriraj predlog (samo ako korisnik nije ručno uneo vrednost)
   useEffect(() => {
@@ -439,7 +440,7 @@ export default function Kalkulator() {
       cenaPanel,
       ukupnaCenaDodatnihTroskova
     }
-  }, [length, selectedStub, width, binderType, padKrova, pricePerKg, cenaMaterijalaPoKg, tipRoznjace, finalBrojBindera, includeAnkerPloca, cenaLimaPoKg, cenaPanelPoM2, povrsinaKrova])
+  }, [length, selectedStub, width, binderType, padKrova, pricePerKg, cenaMaterijalaPoKg, tipRoznjace, finalBrojBindera, includeAnkerPloca, includeAnkerSraf, cenaLimaPoKg, cenaPanelPoM2, povrsinaKrova])
 
   // Funkcija za eksport u PDF
   const exportToPDF = () => {
@@ -517,7 +518,7 @@ export default function Kalkulator() {
       const currentWidthCategory = getWidthCategory(width)
       const hasOptions = BINDERI_PO_SIRINI[currentWidthCategory]?.standardni
       if (hasOptions) {
-        doc.text(`Tip: ${binderType === 'standardni' ? 'Standardni' : 'Jači'} binder`, 20, yPos)
+        doc.text(`Tip: ${binderType === 'standardni' ? 'Standardna nosivost' : 'Veća nosivost'}`, 20, yPos)
         yPos += 5
       }
       doc.text(`Masa bindera: ${binderData.masa}kg`, 20, yPos)
@@ -630,9 +631,13 @@ export default function Kalkulator() {
     <div className="p-8 max-w-6xl mx-auto bg-gray-50 min-h-screen font-sans text-gray-800">
       <h1 className="text-4xl font-bold mb-8 text-center text-gray-900">Kalkulator</h1>
 
-      {/* Šupa parametri */}
-      <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
+      {/* Hale parametri */}
+      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
         <h2 className="text-2xl font-semibold mb-4">Parametri hale</h2>
+        <p className="text-gray-600 mb-6 leading-relaxed font-bold">
+          Na kalkulatoru možete odabrati osnovne dimenzije hale (dužina, širina, visina), tip pad krova, kao i specifične elemente konstrukcije (stubovi, binderi, rožnjače). 
+          Na osnovu vaših izbora, kalkulator će automatski prikazati okvirnu procenu cene, 3D vizualizaciju hale sa svim elementima.
+        </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <label className="flex flex-col">
             Dužina (m)
@@ -706,13 +711,13 @@ export default function Kalkulator() {
       {/* Stubovi, Binderi i Roznjace */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         {/* Stubovi */}
-        <section className="p-6 bg-white rounded-lg shadow-md">
+        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(159, 82, 85, 0.3)' }}>
           <h2 className="text-2xl font-semibold mb-4">Stubovi</h2>
-          <div className="mb-4">
+          {isAdmin && (<div className="mb-4">
             <p className="text-sm text-gray-600 mb-2">
               Visina hale: <strong>{height}m</strong> → Dužina stuba: <strong>{stubDuzina}m</strong>
             </p>
-          </div>
+          </div>)}
           <div className="grid grid-cols-1 gap-6">
             <label>
               Tip stuba i debljina
@@ -734,31 +739,13 @@ export default function Kalkulator() {
           </div>
           {selectedStub && (
             <div className="mt-4 space-y-3">
-              <div className="p-3 bg-gray-100 rounded-md">
-                <p className="text-sm">
-                  <strong>Izabrano:</strong> {selectedStub.tip} x {selectedStub.debljina} (dužina: {stubDuzina}m) - {selectedStub.tezina}kg
-                  {selectedStub.dodatnaTezina && ` + ${selectedStub.dodatnaTezina}kg = ${selectedStub.tezina + selectedStub.dodatnaTezina}kg`}
-                  {' | '}Cena ploče: {selectedStub.ploca}€
-                </p>
-              </div>
-              {ANKER_PLOCA_CENA[selectedStub.tip] && (
+              {isAdmin && (
                 <div className="p-3 bg-gray-100 rounded-md">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={includeAnkerPloca}
-                      onChange={e => setIncludeAnkerPloca(e.target.checked)}
-                      className="w-4 h-4 text-red-700 border-gray-300 rounded focus:ring-red-500"
-                    />
-                    <span className="text-sm">
-                      Uključi anker ploču ({selectedStub.tip}): <strong>{ANKER_PLOCA_CENA[selectedStub.tip]}€</strong> po komadu
-                      {includeAnkerPloca && (
-                        <span className="ml-2 text-red-700">
-                          (Ukupno: {ANKER_PLOCA_CENA[selectedStub.tip] * calculations.brojStubova}€)
-                        </span>
-                      )}
-                    </span>
-                  </label>
+                  <p className="text-sm">
+                    <strong>Izabrano:</strong> {selectedStub.tip} x {selectedStub.debljina} (dužina: {stubDuzina}m) - {selectedStub.tezina}kg
+                    {selectedStub.dodatnaTezina && ` + ${selectedStub.dodatnaTezina}kg = ${selectedStub.tezina + selectedStub.dodatnaTezina}kg`}
+                    {' | '}Cena ploče: {selectedStub.ploca}€
+                  </p>
                 </div>
               )}
             </div>
@@ -766,66 +753,82 @@ export default function Kalkulator() {
         </section>
 
         {/* Binderi */}
-        <section className="p-6 bg-white rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold mb-4">Binderi</h2>
-          <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2">
-              Širina hale: <strong>{width}m</strong> → Kategorija: <strong>{widthCategory}m</strong>
-            </p>
-          </div>
+        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+          <h2 className="text-2xl font-semibold mb-4">Binderi/krovni nosač</h2>
+          {isAdmin && (
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Širina hale: <strong>{width}m</strong> → Kategorija: <strong>{widthCategory}m</strong>
+              </p>
+            </div>
+          )}
           <div className="mb-4">
             <label className="flex flex-col">
               Broj bindera
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
-                <input
-                  type="number"
-                  min="1"
-                  className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full sm:w-auto"
-                  value={finalBrojBindera}
-                  onChange={e => {
-                    const value = parseInt(e.target.value) || 1
-                    setBrojBindera(value)
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBrojBindera(null) // Reset to calculated value
-                  }}
-                  className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md transition-colors whitespace-nowrap w-full sm:w-auto"
-                  title="Koristi predloženu vrednost"
-                >
-                  <span className="hidden sm:inline">Predlog: </span>
-                  <span className="sm:hidden">Predlog </span>
-                  {suggestedBrojBindera}
-                </button>
-              </div>
+              <select
+                className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full"
+                value={finalBrojBindera}
+                onChange={e => {
+                  const value = parseInt(e.target.value) || 2
+                  setBrojBindera(value)
+                }}
+              >
+                {(() => {
+                  const minBroj = Math.max(2, suggestedBrojBindera - 2)
+                  const maxBroj = suggestedBrojBindera + 2
+                  const options = []
+                  for (let i = minBroj; i <= maxBroj; i++) {
+                    options.push(
+                      <option key={i} value={i}>
+                        {i} {i === suggestedBrojBindera ? '(predloženo)' : ''}
+                      </option>
+                    )
+                  }
+                  return options
+                })()}
+              </select>
               <p className="text-xs text-gray-500 mt-1">
-                Predloženo: {suggestedBrojBindera} (izračunato na osnovu sirine: {width}m)
+                Predloženo: {suggestedBrojBindera} (izračunato na osnovu dužine: {length}m)
               </p>
             </label>
           </div>
           {hasBinderTypeOptions(widthCategory) && (
             <div className="mb-4">
               <label className="flex flex-col">
-                Tip bindera
-                <select
-                  className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-                  value={binderType}
-                  onChange={e => setBinderType(e.target.value)}
-                >
-                  <option value="standardni">Standardni binder ({BINDERI_PO_SIRINI[widthCategory]?.standardni?.masa || 0}kg)</option>
-                  <option value="jaci">Jači binder ({BINDERI_PO_SIRINI[widthCategory]?.jaci?.masa || 0}kg)</option>
-                </select>
+                <span className="mb-2">Tip bindera</span>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setBinderType('standardni')}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      binderType === 'standardni'
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Standardna nosivost ({BINDERI_PO_SIRINI[widthCategory]?.standardni?.masa || 0}kg)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBinderType('jaci')}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      binderType === 'jaci'
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Veća nosivost ({BINDERI_PO_SIRINI[widthCategory]?.jaci?.masa || 0}kg)
+                  </button>
+                </div>
               </label>
             </div>
           )}
-          {binderData && (
+          {binderData && isAdmin && (
             <div className="space-y-4">
               <div className="p-4 bg-gray-100 rounded-md">
                 <p className="font-semibold mb-2 text-gray-900">
                   {hasBinderTypeOptions(widthCategory) && (
-                    <span className="mr-2">Tip: <strong>{binderType === 'standardni' ? 'Standardni' : 'Jači'} binder</strong> | </span>
+                    <span className="mr-2">Tip: <strong>{binderType === 'standardni' ? 'Standardna nosivost' : 'Veća nosivost'}</strong> | </span>
                   )}
                   Masa bindera: {binderData.masa}kg
                 </p>
@@ -848,14 +851,16 @@ export default function Kalkulator() {
         </section>
 
         {/* Roznjace */}
-        <section className="p-6 bg-white rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold mb-4">Rožnjače</h2>
-          <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2">
-              Broj rožnjača po binderu: <strong>{binderData?.roznjace?.[padKrova.toString()] || 0}</strong> kom ({padKrova === 1 ? '1 voda' : '2 vode'})
-              {' × '}Dužina hale: <strong>{length}m</strong> = <strong>{(binderData?.roznjace?.[padKrova.toString()] || 0) * length}</strong> kom ukupno
-            </p>
-          </div>
+        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(159, 82, 85, 0.3)' }}>
+          <h2 className="text-2xl font-semibold mb-4">Rožnjače/krovna letva</h2>
+          {isAdmin && (
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Broj rožnjača po binderu: <strong>{binderData?.roznjace?.[padKrova.toString()] || 0}</strong> kom ({padKrova === 1 ? '1 voda' : '2 vode'})
+                {' × '}Dužina hale: <strong>{length}m</strong> = <strong>{(binderData?.roznjace?.[padKrova.toString()] || 0) * length}</strong> kom ukupno
+              </p>
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-6">
             <label>
               Tip rožnjače
@@ -872,7 +877,7 @@ export default function Kalkulator() {
               </select>
             </label>
           </div>
-          {tipRoznjace && ROZNJACE[tipRoznjace] && (
+          {tipRoznjace && ROZNJACE[tipRoznjace] && isAdmin && (
             <div className="mt-4 p-3 bg-gray-100 rounded-md">
               <p className="text-sm">
                 <strong>Izabrano:</strong> {tipRoznjace} x 2.8mm
@@ -884,8 +889,53 @@ export default function Kalkulator() {
         </section>
       </div>
 
+      {/* Opcije ankerisanja */}
+      {selectedStub && ANKER_PLOCA_CENA[selectedStub.tip] && (
+        <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+          <h2 className="text-2xl font-semibold mb-4">Opcije ankerisanja</h2>
+          <div className="space-y-4">
+            <div className="p-3 bg-gray-100 rounded-md">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeAnkerPloca}
+                  onChange={e => setIncludeAnkerPloca(e.target.checked)}
+                  className="w-4 h-4 text-red-700 border-gray-300 rounded focus:ring-red-500"
+                />
+                <span className="text-sm">
+                  Anker ploča ({selectedStub.tip}): <strong>{ANKER_PLOCA_CENA[selectedStub.tip]}€</strong> po komadu
+                  {includeAnkerPloca && (
+                    <span className="ml-2 text-red-700">
+                      (Ukupno: {ANKER_PLOCA_CENA[selectedStub.tip] * calculations.brojStubova}€)
+                    </span>
+                  )}
+                </span>
+              </label>
+            </div>
+            <div className="p-3 bg-gray-100 rounded-md">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeAnkerSraf}
+                  onChange={e => setIncludeAnkerSraf(e.target.checked)}
+                  className="w-4 h-4 text-red-700 border-gray-300 rounded focus:ring-red-500"
+                />
+                <span className="text-sm">
+                  Anker šrafovi ({selectedStub.tip}): <strong>{ANKER_PLOCA_CENA[selectedStub.tip]}€</strong> po komadu
+                  {includeAnkerSraf && (
+                    <span className="ml-2 text-red-700">
+                      (Ukupno: {ANKER_PLOCA_CENA[selectedStub.tip] * calculations.brojStubova}€)
+                    </span>
+                  )}
+                </span>
+              </label>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Rezultati */}
-      <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
+      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(159, 82, 85, 0.3)' }}>
         <h2 className="text-2xl font-semibold mb-4">Rezultati</h2>
         {isAdmin && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -929,15 +979,26 @@ export default function Kalkulator() {
                 <br />
               </>
             )}
-            {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 ? (
-              <>
-                Cena konstrukcije: {formatPrice(calculations.ukupnaCenaBezAnkerPloca)} € + Anker ploča: {formatPrice(calculations.ukupnaCenaAnkerPloca)} € = Ukupna cena: {formatPrice(calculations.ukupnaCena)} €
-              </>
-            ) : (
-              <>
-                Cena konstrukcije: {formatPrice(calculations.ukupnaCena)} €
-              </>
-            )}
+            {(() => {
+              const ukupnaCena = includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 
+                ? calculations.ukupnaCena 
+                : calculations.ukupnaCena
+              const donjaGranica = Math.round((ukupnaCena * 0.9) / 10) * 10
+              const gornjaGranica = Math.round((ukupnaCena * 1.1) / 10) * 10
+              
+              return (
+                <>
+                  <div>
+                    <strong>Procenjena cena:</strong> {formatPrice(donjaGranica)} € - {formatPrice(gornjaGranica)} €
+                  </div>
+                  {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      Cena konstrukcije: {formatPrice(calculations.ukupnaCenaBezAnkerPloca)} € + Anker ploča: {formatPrice(calculations.ukupnaCenaAnkerPloca)} €
+                    </div>
+                  )}
+                </>
+              )
+            })()}
           </div>
         <div className="mt-6 flex justify-center">
           {isAdmin && <button
@@ -953,7 +1014,7 @@ export default function Kalkulator() {
       </section>
 
       {/* 3D Vizualizacija */}
-      <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
+      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
         <h2 className="text-2xl font-semibold mb-4">3D Vizualizacija hale</h2>
         <p className="text-sm text-gray-600 mb-4">
           Interaktivna 3D vizualizacija vaše hale sa svim elementima: stubovima, binderima i rožnjačama.
@@ -973,7 +1034,7 @@ export default function Kalkulator() {
       </section>
 
       {/* Ponuda */}
-      <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
+      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Ponuda</h2>
           {isAdmin && <button
@@ -990,11 +1051,26 @@ export default function Kalkulator() {
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
           <div className="space-y-4 text-sm leading-relaxed whitespace-pre-line">
             <p>
-              <strong>Cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)} je: {formatPrice(calculations.ukupnaCenaBezAnkerPloca)}€</strong>
-              {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
-                <span> plus <strong>{formatPrice(calculations.ukupnaCenaAnkerPloca)}€</strong> su anker ploče</span>
-              )}
-              .
+              {(() => {
+                const ukupnaCena = includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0
+                  ? calculations.ukupnaCena
+                  : calculations.ukupnaCenaBezAnkerPloca
+                const donjaGranica = Math.round((ukupnaCena * 0.9) / 10) * 10
+                const gornjaGranica = Math.round((ukupnaCena * 1.1) / 10) * 10
+                
+                return (
+                  <>
+                    <strong>Procenjena cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)}: {formatPrice(donjaGranica)}€ - {formatPrice(gornjaGranica)}€</strong>
+                    {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
+                      <>
+                        <br />
+                        <span> plus <strong>{formatPrice(calculations.ukupnaCenaAnkerPloca)}€</strong> su anker ploče</span>
+                      </>
+                    )}
+                    .
+                  </>
+                )
+              })()}
             </p>
 
             <div className="mt-4">
@@ -1031,7 +1107,7 @@ export default function Kalkulator() {
       </section>
 
       {isAdmin && (
-        <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
+        <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(159, 82, 85, 0.3)' }}>
           <h2 className="text-2xl font-semibold mb-4">Dodatni troškovi: Kalkulacija</h2>
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1083,7 +1159,7 @@ export default function Kalkulator() {
 
       {/* Ostali parametri */}
       {isAdmin && (
-        <section className="mb-6 p-6 bg-white rounded-lg shadow-md">
+        <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
           <h2 className="text-2xl font-semibold mb-4">Ostali parametri</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <label className="flex flex-col">

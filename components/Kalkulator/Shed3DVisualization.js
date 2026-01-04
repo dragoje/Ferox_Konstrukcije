@@ -354,9 +354,6 @@ export default function Shed3DVisualization({
         {/* Grid helper */}
         <Grid args={[maxDimension * 2, maxDimension * 2]} cellColor="#e2e8f0" sectionColor="#cbd5e0" />
 
-        {/* Axes helper */}
-        <axesHelper args={[maxDimension]} />
-
         {/* Shed structure */}
         <ShedStructure
           length={length}
@@ -383,11 +380,6 @@ export default function Shed3DVisualization({
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-orange-500 rounded"></div>
           <span>Rožnjače ({brojRoznjaca})</span>
-        </div>
-        <div className="mt-2 pt-2 border-t border-gray-300 text-xs text-gray-600">
-          <p>Rotirajte: LMB + pomerajte</p>
-          <p>Zoom: Scroll točak</p>
-          <p>Pomerajte: Srednji taster ili Shift + LMB</p>
         </div>
       </div>
     </div>

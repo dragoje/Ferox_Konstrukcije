@@ -21,6 +21,22 @@ export default function Kontakt() {
 
             <div className="space-y-6 mb-8">
               <div className="flex items-start">
+                <div className="text-2xl mr-4">🏢</div>
+                <div>
+                  <h3 className="font-semibold mb-1">Ime Firme</h3>
+                  <p className="text-gray-600">Ferox konstrukcije</p>
+                </div>
+              </div>
+
+              <div className="flex items-start">
+                <div className="text-2xl mr-4">🔢</div>
+                <div>
+                  <h3 className="font-semibold mb-1">PIB</h3>
+                  <p className="text-gray-600">115009979</p>
+                </div>
+              </div>
+
+              <div className="flex items-start">
                 <div className="text-2xl mr-4">📧</div>
                 <div>
                   <h3 className="font-semibold mb-1">Email</h3>

@@ -11,6 +11,7 @@ export default function Header() {
   const navItems = [
     { href: '/', label: 'Početna' },
     { href: '/proizvodi', label: 'Proizvodi' },
+    { href: '/montaza', label: 'Montaža' },
     { href: '/kontakt', label: 'Kontakt' },
   ]
 
