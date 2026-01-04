@@ -985,8 +985,8 @@ export default function Kalkulator() {
               const ukupnaCena = includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 
                 ? calculations.ukupnaCena 
                 : calculations.ukupnaCena
-              const donjaGranica = Math.round((ukupnaCena * 0.9) / 10) * 10
-              const gornjaGranica = Math.round((ukupnaCena * 1.1) / 10) * 10
+              const donjaGranica = Math.round((ukupnaCena * 0.96) / 10) * 10
+              const gornjaGranica = Math.round((ukupnaCena * 1.04) / 10) * 10
               
               return (
                 <>
