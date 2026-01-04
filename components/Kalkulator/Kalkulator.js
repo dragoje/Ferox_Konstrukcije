@@ -647,6 +647,8 @@ export default function Kalkulator() {
               onChange={e => {
                 const newLength = parseFloat(e.target.value) || 1
                 setLength(newLength)
+                // Resetuj broj bindera na predloženu vrednost kada se promeni dužina
+                setBrojBindera(null)
               }}
             >
               {Array.from({ length: 50 }, (_, i) => i + 1).map(val => (
