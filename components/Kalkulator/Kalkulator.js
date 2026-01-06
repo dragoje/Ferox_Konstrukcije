@@ -981,26 +981,15 @@ export default function Kalkulator() {
                 <br />
               </>
             )}
-            {(() => {
-              const ukupnaCena = includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 
-                ? calculations.ukupnaCena 
-                : calculations.ukupnaCena
-              const donjaGranica = Math.round((ukupnaCena * 0.96) / 10) * 10
-              const gornjaGranica = Math.round((ukupnaCena * 1.04) / 10) * 10
-              
-              return (
-                <>
-                  <div>
-                    <strong>Procenjena cena:</strong> {formatPrice(donjaGranica)} € - {formatPrice(gornjaGranica)} €
-                  </div>
-                  {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
-                    <div className="text-sm text-gray-600 mt-1">
-                      Cena konstrukcije: {formatPrice(calculations.ukupnaCenaBezAnkerPloca)} € + Anker ploča: {formatPrice(calculations.ukupnaCenaAnkerPloca)} €
-                    </div>
-                  )}
-                </>
-              )
-            })()}
+            {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 ? (
+              <>
+                Cena konstrukcije: {formatPrice(calculations.ukupnaCenaBezAnkerPloca)} € + Anker ploča: {formatPrice(calculations.ukupnaCenaAnkerPloca)} € = Ukupna cena: {formatPrice(calculations.ukupnaCena)} €
+              </>
+            ) : (
+              <>
+                Cena konstrukcije: {formatPrice(calculations.ukupnaCena)} €
+              </>
+            )}
           </div>
         <div className="mt-6 flex justify-center">
           {isAdmin && <button
@@ -1053,26 +1042,11 @@ export default function Kalkulator() {
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
           <div className="space-y-4 text-sm leading-relaxed whitespace-pre-line">
             <p>
-              {(() => {
-                const ukupnaCena = includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0
-                  ? calculations.ukupnaCena
-                  : calculations.ukupnaCenaBezAnkerPloca
-                const donjaGranica = Math.round((ukupnaCena * 0.9) / 10) * 10
-                const gornjaGranica = Math.round((ukupnaCena * 1.1) / 10) * 10
-                
-                return (
-                  <>
-                    <strong>Procenjena cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)}: {formatPrice(donjaGranica)}€ - {formatPrice(gornjaGranica)}€</strong>
-                    {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
-                      <>
-                        <br />
-                        <span> plus <strong>{formatPrice(calculations.ukupnaCenaAnkerPloca)}€</strong> su anker ploče</span>
-                      </>
-                    )}
-                    .
-                  </>
-                )
-              })()}
+              <strong>Cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)} je: {formatPrice(calculations.ukupnaCenaBezAnkerPloca)}€</strong>
+              {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
+                <span> plus <strong>{formatPrice(calculations.ukupnaCenaAnkerPloca)}€</strong> su anker ploče</span>
+              )}
+              .
             </p>
 
             <div className="mt-4">
