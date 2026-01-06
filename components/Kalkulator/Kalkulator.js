@@ -713,7 +713,7 @@ export default function Kalkulator() {
       {/* Stubovi, Binderi i Roznjace */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         {/* Stubovi */}
-        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(159, 82, 85, 0.3)' }}>
+        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
           <h2 className="text-2xl font-semibold mb-4">Stubovi</h2>
           {isAdmin && (<div className="mb-4">
             <p className="text-sm text-gray-600 mb-2">
@@ -853,7 +853,7 @@ export default function Kalkulator() {
         </section>
 
         {/* Roznjace */}
-        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(159, 82, 85, 0.3)' }}>
+        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
           <h2 className="text-2xl font-semibold mb-4">Rožnjače/krovna letva</h2>
           {isAdmin && (
             <div className="mb-4">
@@ -937,7 +937,7 @@ export default function Kalkulator() {
       )}
 
       {/* Rezultati */}
-      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(159, 82, 85, 0.3)' }}>
+      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
         <h2 className="text-2xl font-semibold mb-4">Rezultati</h2>
         {isAdmin && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -1083,7 +1083,7 @@ export default function Kalkulator() {
       </section>
 
       {isAdmin && (
-        <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(159, 82, 85, 0.3)' }}>
+        <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
           <h2 className="text-2xl font-semibold mb-4">Dodatni troškovi: Kalkulacija</h2>
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

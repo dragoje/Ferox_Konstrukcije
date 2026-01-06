@@ -243,10 +243,8 @@ function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubo
 
   const roofPurlins = []
 
-  // Create continuous purlins running the full length
-  for (let zIdx = 0; zIdx < roznjaceAcrossWidth; zIdx++) {
-    const zPos = (zIdx + 1) * purlinZSpacing - width / 2
-
+  // Helper function to calculate roof purlin position
+  const calculatePurlinPosition = (zPos) => {
     let yPos
     let roofAngle
 
@@ -262,12 +260,26 @@ function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubo
       roofAngle = Math.atan(roofSlopeRatio) * (zPos > 0 ? -1 : 1)
     }
 
-    roofPurlins.push({
+    return {
       position: [0, yPos, zPos],
       length: length,
       rotation: [roofAngle, 0, 0]
-    })
+    }
   }
+
+  // Add purlin at the left edge (start)
+  const leftEdgeZ = -width / 2
+  roofPurlins.push(calculatePurlinPosition(leftEdgeZ))
+
+  // Create continuous purlins running the full length (existing ones)
+  for (let zIdx = 0; zIdx < roznjaceAcrossWidth; zIdx++) {
+    const zPos = (zIdx + 1) * purlinZSpacing - width / 2
+    roofPurlins.push(calculatePurlinPosition(zPos))
+  }
+
+  // Add purlin at the right edge (end)
+  const rightEdgeZ = width / 2
+  roofPurlins.push(calculatePurlinPosition(rightEdgeZ))
 
   return (
     <group>
