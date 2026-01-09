@@ -4,207 +4,16 @@ import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import jsPDF from 'jspdf'
 import Shed3DVisualization from './Shed3DVisualization'
+import { STUBOVI_PO_DUZINI, BINDERI_PO_SIRINI, ROZNJACE, ANKER_PLOCA_CENA } from '@/data/konstrukcijaData'
 
 // Helper function to format numbers with comma as thousand separator
 const formatPrice = (value) => {
   return value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
-// --- Podaci stubova - organizovano po dužini ---
-const STUBOVI_PO_DUZINI = {
-  '2.5': [
-    { tip: '100x100', debljina: '2.8mm', tezina: 27, ploca: 10 },
-    { tip: '100x100', debljina: '3.8mm', tezina: 36, ploca: 10 }
-  ],
-  '3': [
-    { tip: '100x100', debljina: '2.8mm', tezina: 27, ploca: 10 },
-    { tip: '100x100', debljina: '3.8mm', tezina: 36, ploca: 10 }
-  ],
-  '4': [
-    { tip: '100x100', debljina: '2.8mm', tezina: 36, ploca: 10 },
-    { tip: '100x100', debljina: '3.8mm', tezina: 48, ploca: 10 },
-    { tip: '120x120', debljina: '3.8mm', tezina: 58, ploca: 15 },
-    { tip: '120x120', debljina: '4.8mm', tezina: 70, ploca: 15 }
-  ],
-  '4.5': [
-    { tip: '100x100', debljina: '3.8mm', tezina: 55, ploca: 10 },
-    { tip: '120x120', debljina: '3.8mm', tezina: 65, ploca: 15 },
-    { tip: '120x120', debljina: '4.8mm', tezina: 78, ploca: 15 },
-    { tip: '150x150', debljina: '4.8mm', tezina: 100, ploca: 24 }
-  ],
-  '5': [
-    { tip: '100x100', debljina: '3.8mm', tezina: 60, dodatnaTezina: 12, ploca: 10 },
-    { tip: '120x120', debljina: '3.8mm', tezina: 72, dodatnaTezina: 14, ploca: 15 },
-    { tip: '120x120', debljina: '4.8mm', tezina: 85, dodatnaTezina: 17, ploca: 15 },
-    { tip: '150x150', debljina: '4.8mm', tezina: 110, dodatnaTezina: 22, ploca: 24 }
-  ],
-  '6': [
-    { tip: '120x120', debljina: '4.8mm', tezina: 105, ploca: 15 },
-    { tip: '150x150', debljina: '4.8mm', tezina: 135, ploca: 24 },
-    { tip: '150x150', debljina: '5.8mm', tezina: 160, ploca: 24 }
-  ]
-}
-
-// --- Podaci bindera - organizovano po širini ---
-const BINDERI_PO_SIRINI = {
-  '5': {
-    masa: 100,
-    profili: [
-      { tip: '80x60', debljina: '2.8mm', duzina: 12 },
-      { tip: '40x40', debljina: '2.8mm', duzina: 6 }
-    ],
-    roznjace: {
-      '1': 6,
-      '2': 8
-    }
-  },
-  '6': {
-    masa: 115,
-    profili: [
-      { tip: '80x60', debljina: '2.8mm', duzina: 12 },
-      { tip: '40x40', debljina: '2.8mm', duzina: 6 }
-    ],
-    roznjace: {
-      '1': 7,
-      '2': 8
-    }
-  },
-  '7': {
-    masa: 135,
-    profili: [
-      { tip: '80x60', debljina: '2.8mm', duzina: 15 },
-      { tip: '40x40', debljina: '2.8mm', duzina: 10 }
-    ],
-    roznjace: {
-      '1': 8,
-      '2': 8
-    }
-  },
-  '8': {
-    standardni: {
-      masa: 160,
-      profili: [
-        { tip: '80x60', debljina: '2.8mm', duzina: 18 },
-        { tip: '40x40', debljina: '2.8mm', duzina: 14 }
-      ],
-      roznjace: {
-        '1': 9,
-        '2': 10
-      }
-    },
-    jaci: {
-      masa: 210,
-      profili: [
-        { tip: '80x60', debljina: '3.8mm', duzina: 18 },
-        { tip: '40x40', debljina: '2.8mm', duzina: 14 }
-      ],
-      roznjace: {
-        '1': 9,
-        '2': 10
-      }
-    }
-  },
-  '9': {
-    standardni: {
-      masa: 230,
-      profili: [
-        { tip: '80x60', debljina: '3.8mm', duzina: 22 },
-        { tip: '40x40', debljina: '2.8mm', duzina: 14 }
-      ],
-      roznjace: {
-        '1': 10,
-        '2': 10
-      }
-    },
-    jaci: {
-      masa: 265,
-      profili: [
-        { tip: '80x80', debljina: '3.8mm', duzina: 22 },
-        { tip: '40x40', debljina: '2.8mm', duzina: 14 }
-      ],
-      roznjace: {
-        '1': 10,
-        '2': 10
-      }
-    }
-  },
-  '10': {
-    standardni: {
-      masa: 240,
-      profili: [
-        { tip: '80x60', debljina: '3.8mm', duzina: 24 },
-        { tip: '40x40', debljina: '2.8mm', duzina: 16 }
-      ],
-      roznjace: {
-        '1': 11,
-        '2': 12
-      }
-    },
-    jaci: {
-      masa: 280,
-      profili: [
-        { tip: '80x80', debljina: '3.8mm', duzina: 24 },
-        { tip: '40x40', debljina: '2.8mm', duzina: 16 }
-      ],
-      roznjace: {
-        '1': 11,
-        '2': 12
-      }
-    }
-  },
-  '12': {
-    standardni: {
-      masa: 285,
-      profili: [
-        { tip: '80x80', debljina: '3.8mm', duzina: 26 },
-        { tip: '40x40', debljina: '3.8mm', duzina: 16 }
-      ],
-      roznjace: {
-        '1': 13,
-        '2': 14
-      }
-    },
-    jaci: {
-      masa: 320,
-      profili: [
-        { tip: '100x80', debljina: '3.8mm', duzina: 26 },
-        { tip: '40x40', debljina: '3.8mm', duzina: 16 }
-      ],
-      roznjace: {
-        '1': 13,
-        '2': 14
-      }
-    }
-  }
-}
-
-// --- Podaci rožnjača ---
-const ROZNJACE = {
-  '60x40': {
-    '2.8': {
-      masa: 4, // kg
-      cenaPoMetru: 6 // €/m
-    }
-  },
-  '80x40': {
-    '2.8': {
-      masa: 4.9, // kg
-      cenaPoMetru: 8 // €/m
-    }
-  },
-  '100x50': {
-    '2.8': {
-      masa: 6.2, // kg
-      cenaPoMetru: 10 // €/m
-    }
-  }
-}
-
-// --- Cene anker ploča po dimenzijama stubova ---
-const ANKER_PLOCA_CENA = {
-  '100x100': 17, // €
-  '120x120': 20, // €
-  '150x150': 30  // €
+// Helper function to round up to nearest 50
+const roundUpTo50 = (value) => {
+  return Math.ceil(value / 50) * 50
 }
 
 export default function Kalkulator() {
@@ -555,7 +364,7 @@ export default function Kalkulator() {
     // Ukupna cena
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
-    doc.text(`UKUPNA CENA: ${calculations.ukupnaCena.toFixed(2)}€`, 105, yPos, { align: 'center' })
+    doc.text(`UKUPNA CENA: ${roundUpTo50(calculations.ukupnaCena).toFixed(2)}€`, 105, yPos, { align: 'center' })
 
     // Sačuvaj PDF
     const dateStr = new Date().toISOString().split('T')[0]
@@ -568,9 +377,9 @@ export default function Kalkulator() {
   const formatPonudaForEmail = () => {
     let ponudaText = ''
 
-    ponudaText += `Cena konstrukcije ${length}m x ${width}m x ${height}m na ${padKrova === 1 ? 'jednu vodu' : 'dve vode'} je: ${formatPrice(calculations.ukupnaCenaBezAnkerPloca)}€`
+    ponudaText += `Cena konstrukcije ${length}m x ${width}m x ${height}m na ${padKrova === 1 ? 'jednu vodu' : 'dve vode'} je: ${formatPrice(roundUpTo50(calculations.ukupnaCenaBezAnkerPloca))}€`
     if (includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0) {
-      ponudaText += ` plus ${formatPrice(calculations.ukupnaCenaAnkerPloca)}€ su anker ploče`
+      ponudaText += ` plus ${formatPrice(roundUpTo50(calculations.ukupnaCenaAnkerPloca))}€ su anker ploče`
     }
     ponudaText += '.\n\n'
 
@@ -713,7 +522,7 @@ export default function Kalkulator() {
       {/* Stubovi, Binderi i Roznjace */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         {/* Stubovi */}
-        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
+        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
           <h2 className="text-2xl font-semibold mb-4">Stubovi</h2>
           {isAdmin && (<div className="mb-4">
             <p className="text-sm text-gray-600 mb-2">
@@ -853,7 +662,7 @@ export default function Kalkulator() {
         </section>
 
         {/* Roznjace */}
-        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
+        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
           <h2 className="text-2xl font-semibold mb-4">Rožnjače/krovna letva</h2>
           {isAdmin && (
             <div className="mb-4">
@@ -901,7 +710,12 @@ export default function Kalkulator() {
                 <input
                   type="checkbox"
                   checked={includeAnkerPloca}
-                  onChange={e => setIncludeAnkerPloca(e.target.checked)}
+                  onChange={e => {
+                    setIncludeAnkerPloca(e.target.checked)
+                    if (e.target.checked) {
+                      setIncludeAnkerSraf(false) // Isključi anker šrafove ako se anker ploča izabere
+                    }
+                  }}
                   className="w-4 h-4 text-red-700 border-gray-300 rounded focus:ring-red-500"
                 />
                 <span className="text-sm">
@@ -919,7 +733,12 @@ export default function Kalkulator() {
                 <input
                   type="checkbox"
                   checked={includeAnkerSraf}
-                  onChange={e => setIncludeAnkerSraf(e.target.checked)}
+                  onChange={e => {
+                    setIncludeAnkerSraf(e.target.checked)
+                    if (e.target.checked) {
+                      setIncludeAnkerPloca(false) // Isključi anker ploču ako se anker šrafovi izaberu
+                    }
+                  }}
                   className="w-4 h-4 text-red-700 border-gray-300 rounded focus:ring-red-500"
                 />
                 <span className="text-sm">
@@ -937,7 +756,7 @@ export default function Kalkulator() {
       )}
 
       {/* Rezultati */}
-      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
+      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
         <h2 className="text-2xl font-semibold mb-4">Rezultati</h2>
         {isAdmin && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -972,25 +791,58 @@ export default function Kalkulator() {
             </div>
           </div>
         )}
-        <div className="p-4 bg-gray-100 rounded-md shadow-sm font-bold text-lg text-gray-800">
-            {isAdmin && (
-              <>
-                Cena po metru kvadratnom: {formatPrice(calculations.cenaPoMetru)} €/m2
-                <br />
-                Ukupna težina: {formatPrice(calculations.ukupnaTezina)} kg
-                <br />
-              </>
-            )}
-            {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 ? (
-              <>
-                Cena konstrukcije: {formatPrice(calculations.ukupnaCenaBezAnkerPloca)} € + Anker ploča: {formatPrice(calculations.ukupnaCenaAnkerPloca)} € = Ukupna cena: {formatPrice(calculations.ukupnaCena)} €
-              </>
-            ) : (
-              <>
-                Cena konstrukcije: {formatPrice(calculations.ukupnaCena)} €
-              </>
-            )}
+        <div className="p-6 bg-gray-100 rounded-md shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Okvirna cena konstrukcije</h3>
+            <div className="text-2xl font-bold text-gray-900 mb-2">
+              {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 ? (
+                <>
+                  {formatPrice(roundUpTo50(calculations.ukupnaCenaBezAnkerPloca))} €
+                  {includeAnkerSraf && calculations.ukupnaCenaAnkerPloca > 0 && (
+                    <span className="text-lg"> + {formatPrice(roundUpTo50(calculations.ukupnaCenaAnkerPloca))} € (anker šrafovi)</span>
+                  )}
+                  {includeAnkerPloca && !includeAnkerSraf && calculations.ukupnaCenaAnkerPloca > 0 && (
+                    <span className="text-lg"> + {formatPrice(roundUpTo50(calculations.ukupnaCenaAnkerPloca))} € (anker ploča)</span>
+                  )}
+                  <span className="text-lg"> = {formatPrice(roundUpTo50(calculations.ukupnaCena))} €</span>
+                </>
+              ) : (
+                <>
+                  {formatPrice(roundUpTo50(calculations.ukupnaCena))} €
+                </>
+              )}
+            </div>
           </div>
+          
+          <div className="mb-4 border-t pt-4">
+            <p className="font-semibold text-gray-800 mb-2">Šta ulazi u cenu:</p>
+            <ul className="space-y-1 text-gray-700">
+              <li>• <strong>{calculations.brojStubova} stubova</strong> ({selectedStub?.tip} x {selectedStub?.debljina})</li>
+              <li>• <strong>{calculations.brojBindera} bindera</strong> {binderData && dostupniBinderi.length > 0 && `(${dostupniBinderi[0].tip} x ${dostupniBinderi[0].debljina})`}</li>
+              <li>• <strong>{calculations.ukupanBrojRoznjaca} metara rožnjača</strong> {tipRoznjace && ROZNJACE[tipRoznjace] && `(${tipRoznjace} x 2.8mm)`}</li>
+              {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
+                <li>• <strong>{calculations.brojStubova} anker ploča</strong> ({selectedStub?.tip})</li>
+              )}
+              {includeAnkerSraf && calculations.ukupnaCenaAnkerPloca > 0 && (
+                <li>• <strong>{calculations.brojStubova} anker šrafova</strong> ({selectedStub?.tip})</li>
+              )}
+            </ul>
+          </div>
+
+          {isAdmin && (
+            <div className="mb-4 border-t pt-4 text-sm text-gray-600">
+              <p>Cena po metru kvadratnom: {formatPrice(calculations.cenaPoMetru)} €/m²</p>
+              <p>Ukupna težina: {formatPrice(calculations.ukupnaTezina)} kg</p>
+            </div>
+          )}
+
+          <div className="border-t pt-4">
+            <p className="text-sm text-gray-600 italic">
+              <strong>Napomena:</strong> Prikazana cena je <strong>okvirna</strong> i može varirati. 
+              Za <strong>preciznu cenu</strong> i finalnu ponudu, molimo kontaktirajte nas.
+            </p>
+          </div>
+        </div>
         <div className="mt-6 flex justify-center">
           {isAdmin && <button
             onClick={exportToPDF}
@@ -1025,6 +877,7 @@ export default function Kalkulator() {
       </section>
 
       {/* Ponuda */}
+      {isAdmin && (
       <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold">Ponuda</h2>
@@ -1042,9 +895,9 @@ export default function Kalkulator() {
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
           <div className="space-y-4 text-sm leading-relaxed whitespace-pre-line">
             <p>
-              <strong>Cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)} je: {formatPrice(calculations.ukupnaCenaBezAnkerPloca)}€</strong>
+              <strong>Cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)} je: {formatPrice(roundUpTo50(calculations.ukupnaCenaBezAnkerPloca))}€</strong>
               {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
-                <span> plus <strong>{formatPrice(calculations.ukupnaCenaAnkerPloca)}€</strong> su anker ploče</span>
+                <span> plus <strong>{formatPrice(roundUpTo50(calculations.ukupnaCenaAnkerPloca))}€</strong> su anker ploče</span>
               )}
               .
             </p>
@@ -1081,6 +934,7 @@ export default function Kalkulator() {
           </div>
         </div>
       </section>
+      )}
 
       {isAdmin && (
         <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
