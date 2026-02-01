@@ -899,14 +899,16 @@ export default function Kalkulator() {
           )}
 
           <div className="border-t pt-4">
-            <p className="text-sm text-gray-600 italic">
-              <strong>Napomena:</strong> Prikazana cena je <strong>okvirna</strong> i može varirati. 
-              Za <strong>preciznu cenu</strong> i finalnu ponudu, molimo kontaktirajte nas.
-              <br />
-              <br />
-              <strong>Napomena:</strong> Prevoz i montaza nisu ukljuceni u cenu. <strong>Montažu ne radimo</strong>, ali po potrebi možemo organizovati prevoz.
-            </p>
+            <p className="text-m text-gray-600 italic"><strong>Napomena:</strong></p>
+            <ul className="list-disc list-inside">
+              <li>Prikazana cena je okvirna i može varirati.</li>
+              <li>Za preciznu cenu i finalnu ponudu, molimo kontaktirajte nas.</li>
+              <li>Prevoz i montaza nisu ukljuceni u cenu.</li>
+              <li><strong>Montažu ne radimo</strong>, ali po potrebi možemo organizovati prevoz.</li>
+              <li>Rok isporuke je od 2 do 4 nedelje</li>
+            </ul>
           </div>
+
         </div>
         <div className="mt-6 flex justify-center">
           {isAdmin && <button

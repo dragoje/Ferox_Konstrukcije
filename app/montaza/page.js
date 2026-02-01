@@ -26,7 +26,7 @@ Stubovi se nivelisu pod libelu (vertikalno poravnanje)
 Po potrebi se privremeno fiksiraju klinovima ili podmetačima
 
 Nakon provere, stubovi se blago dotegnu, ali se ostavlja mogućnost finog podešavanja u sledećim fazama`,
-      ikona: '⚙️'
+      ikona: '📏'
     },
     {
       broj: 3,
@@ -64,7 +64,7 @@ Postavljaju se bočna i krovna ukrućenja po potrebi
 Ukrućenja sprečavaju bočna pomeranja i uvijanja konstrukcije
 
 Sve veze se proveravaju pre konačnog zatezanja`,
-      ikona: '🔨'
+      ikona: '⚙️'
     },
     {
       broj: 6,
@@ -123,7 +123,7 @@ Konstrukcija je spremna za dalju ugradnju krova i obloga`,
           </div>
         </div>
 
-        {/* Additional Info Section */}
+        {/* Additional Info Section
         <div className="max-w-4xl mx-auto mt-16">
           <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-lg p-8 shadow-lg">
             <h2 className="text-2xl font-bold mb-4 text-center">Važne Napomene</h2>
@@ -151,7 +151,7 @@ Konstrukcija je spremna za dalju ugradnju krova i obloga`,
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* CTA Section */}
         <div className="max-w-4xl mx-auto mt-12 text-center">
