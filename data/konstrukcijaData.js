@@ -195,3 +195,9 @@ export const ANKER_PLOCA_CENA = {
   '150x150': 30  // €
 }
 
+export const ANKER_SRAFO_CENA = [
+  { tip: '100x100', debljina: '20mm', duzina: '200mm', cena: 10 }, 
+  { tip: '120x120', debljina: '20mm', duzina: '240mm', cena: 12 }, 
+  { tip: '150x150', debljina: '20mm', duzina: '300mm', cena: 15 }
+]
+

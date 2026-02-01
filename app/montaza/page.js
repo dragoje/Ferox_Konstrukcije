@@ -4,44 +4,80 @@ export default function Montaza() {
   const koraci = [
     {
       broj: 1,
-      naslov: 'Priprema Terena',
-      opis: 'Priprema i izravnavanje terena na kome će se konstrukcija montirati. Provera nivoa i obezbeđivanje čvrstog temelja.',
+      naslov: 'Priprema betonske podloge i ankera',
+      opis: `Montaža može da se izvodi na više načina, u zavisnosti od faze gradnje i dogovora sa investitorom:
+
+Ugradnja anker ploča u svež beton
+Anker ploče se postavljaju i utapaju u beton prema unapred definisanim i tačnim merama konstrukcije.
+
+Bušenje već gotovog betona
+Na postojećoj betonskoj ploči se obeležavaju pozicije stubova, nakon čega se buše rupe za anker šrafove.
+
+U oba slučaja, za precizno poravnanje koristi se konac ili laserska linija, kako bi svi stubovi bili u istoj osi i ravni.`,
       ikona: '🏗️'
     },
     {
       broj: 2,
-      naslov: 'Postavljanje Temelja',
-      opis: 'Postavljanje betonskih temelja ili sidara prema projektnoj dokumentaciji. Obezbeđivanje tačnih dimenzija i pozicija.',
-      ikona: '🔨'
-    },
-    {
-      broj: 3,
-      naslov: 'Montaža Nosača',
-      opis: 'Postavljanje glavnih nosača konstrukcije. Precizno pozicioniranje i pričvršćivanje na temelje.',
+      naslov: 'Montaža stubova',
+      opis: `Stubovi se postavljaju na pripremljene anker ploče ili anker šrafove i privremeno pričvršćuju.
+
+Stubovi se nivelisu pod libelu (vertikalno poravnanje)
+
+Po potrebi se privremeno fiksiraju klinovima ili podmetačima
+
+Nakon provere, stubovi se blago dotegnu, ali se ostavlja mogućnost finog podešavanja u sledećim fazama`,
       ikona: '⚙️'
     },
     {
-      broj: 4,
-      naslov: 'Montaža Poprečnih Nosača',
-      opis: 'Postavljanje poprečnih nosača koji povezuju glavne nosače i obezbeđuju stabilnost konstrukcije.',
+      broj: 3,
+      naslov: 'Montaža bindera',
+      opis: `Nakon postavljanja stubova, pristupa se montaži krovnih bindera.
+
+Binderi se spuštaju odozgo (kranom ili viljuškarom)
+
+Vezuju se za stubove pomoću vijčanih spojeva
+
+Proverava se pravac i visina bindera
+
+Po potrebi se dodatno ispravljaju stubovi i binderi pomoću klinova`,
       ikona: '🔧'
     },
     {
-      broj: 5,
-      naslov: 'Postavljanje Krova',
-      opis: 'Montaža krovnih panela ili limova. Obezbeđivanje vodonepropusnosti i pravilnog nagiba krova.',
+      broj: 4,
+      naslov: 'Postavljanje rožnjača',
+      opis: `Kada su stubovi i binderi pravilno postavljeni:
+
+Rožnjače se postavljaju na kant
+
+Oslanjaju se na L-profile ili nosače na binderima
+
+Rožnjače se zavaruju ili fiksiraju prema projektu`,
       ikona: '🏠'
     },
     {
-      broj: 6,
-      naslov: 'Postavljanje Zidova',
-      opis: 'Montaža bočnih zidova i fasade. Postavljanje panela ili limova prema specifikaciji.',
-      ikona: '🧱'
+      broj: 5,
+      naslov: 'Ugradnja ukrućenja',
+      opis: `Radi dodatne stabilnosti konstrukcije:
+
+Postavljaju se bočna i krovna ukrućenja po potrebi
+
+Ukrućenja sprečavaju bočna pomeranja i uvijanja konstrukcije
+
+Sve veze se proveravaju pre konačnog zatezanja`,
+      ikona: '🔨'
     },
     {
-      broj: 7,
-      naslov: 'Finalna Provera',
-      opis: 'Kontrola kvaliteta, provera svih spojeva, nivoa i sigurnosti. Finalna provera prema projektnoj dokumentaciji.',
+      broj: 6,
+      naslov: 'Završno poravnanje i zatezanje',
+      opis: `Kada je kompletna konstrukcija postavljena:
+
+Proverava se vertikalnost, horizontalnost i dijagonale
+
+Konstrukcija se dovodi u završnu libelu
+
+Svi vijci i anker šrafovi se konačno zatežu
+
+Konstrukcija je spremna za dalju ugradnju krova i obloga`,
       ikona: '✅'
     }
   ]
@@ -79,7 +115,7 @@ export default function Montaza() {
                       <span className="text-3xl">{korak.ikona}</span>
                       <h2 className="text-2xl font-bold text-gray-900">{korak.naslov}</h2>
                     </div>
-                    <p className="text-gray-600 text-lg leading-relaxed">{korak.opis}</p>
+                    <p className="text-gray-600 text-lg leading-relaxed whitespace-pre-line">{korak.opis}</p>
                   </div>
                 </div>
               </div>

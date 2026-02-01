@@ -127,6 +127,21 @@ export default function HalaDetailPage({ params }) {
               <p className="text-xl text-gray-600 mb-4">{hala.shortDescription}</p>
             </div>
 
+            {/* Cena i napomena */}
+            {hala.price && (
+              <div className="mb-4">
+                <p className="mb-2">
+                  <span className="text-lg text-gray-700">Cena: </span>
+                  <span className="text-3xl font-bold text-red-700">
+                    {typeof hala.price === 'number' ? `${hala.price.toLocaleString()} €` : hala.price}
+                  </span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Napomena:</strong> Prevoz i montaza nisu ukljuceni u cenu. <strong>Montažu ne radimo</strong>, ali po potrebi možemo organizovati prevoz.
+                </p>
+              </div>
+            )}
+
             {/* Glavni opis */}
             <div className="prose max-w-none">
               <h2 className="text-2xl font-semibold mb-3">Opis</h2>

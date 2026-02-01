@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import jsPDF from 'jspdf'
 import Shed3DVisualization from './Shed3DVisualization'
-import { STUBOVI_PO_DUZINI, BINDERI_PO_SIRINI, ROZNJACE, ANKER_PLOCA_CENA } from '@/data/konstrukcijaData'
+import { STUBOVI_PO_DUZINI, BINDERI_PO_SIRINI, ROZNJACE, ANKER_PLOCA_CENA, ANKER_SRAFO_CENA } from '@/data/konstrukcijaData'
 
 // Helper function to format numbers with comma as thousand separator
 const formatPrice = (value) => {
@@ -211,8 +211,13 @@ export default function Kalkulator() {
     // Anker ploča cena (po dimenzijama stubova)
     const ankerPlocaCena = ANKER_PLOCA_CENA[selectedStub.tip] || 0
     const ukupnaCenaAnkerPloca = includeAnkerPloca ? ankerPlocaCena * brojStubova : 0
+    
+    // Anker šraf cena (po dimenzijama stubova)
+    const ankerSrafData = ANKER_SRAFO_CENA.find(item => item.tip === selectedStub.tip) || null
+    const ankerSrafCena = ankerSrafData?.cena || 0
+    const ukupnaCenaAnkerSraf = includeAnkerSraf ? ankerSrafCena * brojStubova : 0
 
-    const ukupnaCenaStubova = brojStubova * (cenaOsnovneTezine + cenaDodatneTezine + cenaPloca) + ukupnaCenaAnkerPloca
+    const ukupnaCenaStubova = brojStubova * (cenaOsnovneTezine + cenaDodatneTezine + cenaPloca) + ukupnaCenaAnkerPloca + ukupnaCenaAnkerSraf
     const ukupnaTezinaStubova = tezinaStuba * brojStubova
 
     // Izračunaj binderData unutar useMemo
@@ -240,8 +245,10 @@ export default function Kalkulator() {
     const ukupnaTezinaRoznjaca = tezinaRoznjace * ukupanBrojRoznjaca
 
     const ukupnaTezina = ukupnaTezinaStubova + ukupnaTezinaBindera + ukupnaTezinaRoznjaca
-    const ukupnaCena = ukupnaCenaStubova + ukupnaCenaBindera + ukupnaCenaRoznjaca
-    const ukupnaCenaBezAnkerPloca = ukupnaCenaStubova + ukupnaCenaBindera + ukupnaCenaRoznjaca - ukupnaCenaAnkerPloca
+    const ukupnaCenaBezAnkerPloca = ukupnaCenaStubova + ukupnaCenaBindera + ukupnaCenaRoznjaca - ukupnaCenaAnkerPloca - ukupnaCenaAnkerSraf
+    // Zaokruži cenu konstrukcije (bez anker ploča/šrafova) na 50, a anker ploče/šrafove dodaj bez zaokruživanja
+    const zaokruzenaCenaBezAnker = roundUpTo50(ukupnaCenaBezAnkerPloca)
+    const ukupnaCena = zaokruzenaCenaBezAnker + ukupnaCenaAnkerPloca + ukupnaCenaAnkerSraf
 
     const povrsinaHale = length * width
     const cenaPoMetru = ukupnaCena / povrsinaHale
@@ -257,6 +264,9 @@ export default function Kalkulator() {
       cenaPloca,
       ankerPlocaCena,
       ukupnaCenaAnkerPloca,
+      ankerSrafCena,
+      ankerSrafData,
+      ukupnaCenaAnkerSraf,
       ukupnaCenaStubova,
       ukupanBrojRoznjaca,
       tezinaBindera: tezinaBinderaPoKomadu,
@@ -338,6 +348,15 @@ export default function Kalkulator() {
         doc.text(`Ukupna cena anker ploča: ${calculations.ukupnaCenaAnkerPloca.toFixed(2)}€`, 20, currentYPos + 5)
         currentYPos += 10
       }
+      if (includeAnkerSraf && calculations.ankerSrafCena > 0) {
+        const ankerSrafDataForPDF = ANKER_SRAFO_CENA.find(item => item.tip === selectedStub.tip)
+        if (ankerSrafDataForPDF) {
+          doc.text(`Anker šrafovi (${selectedStub.tip}): ${calculations.ankerSrafCena}€ po komadu`, 20, currentYPos)
+          doc.text(`Opis: M${ankerSrafDataForPDF.debljina.replace('mm', '')} x ${ankerSrafDataForPDF.duzina}`, 20, currentYPos + 5)
+          doc.text(`Ukupna cena anker šrafova: ${calculations.ukupnaCenaAnkerSraf.toFixed(2)}€`, 20, currentYPos + 10)
+          currentYPos += 15
+        }
+      }
       doc.text(`Ukupna cena stubova: ${calculations.ukupnaCenaStubova.toFixed(2)}€`, 20, currentYPos)
     }
     yPos += 35
@@ -390,7 +409,7 @@ export default function Kalkulator() {
     // Ukupna cena
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
-    doc.text(`UKUPNA CENA: ${roundUpTo50(calculations.ukupnaCena).toFixed(2)}€`, 105, yPos, { align: 'center' })
+    doc.text(`UKUPNA CENA: ${calculations.ukupnaCena.toFixed(2)}€`, 105, yPos, { align: 'center' })
 
     // Sačuvaj PDF
     const dateStr = new Date().toISOString().split('T')[0]
@@ -403,10 +422,7 @@ export default function Kalkulator() {
   const formatPonudaForEmail = () => {
     let ponudaText = ''
 
-    ponudaText += `Cena konstrukcije ${length}m x ${width}m x ${height}m na ${padKrova === 1 ? 'jednu vodu' : 'dve vode'} je: ${formatPrice(roundUpTo50(calculations.ukupnaCenaBezAnkerPloca))}€`
-    if (includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0) {
-      ponudaText += ` plus ${formatPrice(roundUpTo50(calculations.ukupnaCenaAnkerPloca))}€ su anker ploče`
-    }
+    ponudaText += `Cena konstrukcije ${length}m x ${width}m x ${height}m na ${padKrova === 1 ? 'jednu vodu' : 'dve vode'} je: ${formatPrice(calculations.ukupnaCena)}€`
     ponudaText += '.\n\n'
 
     ponudaText += 'Profili za konstrukciju:\n'
@@ -469,9 +485,8 @@ export default function Kalkulator() {
       {/* Hale parametri */}
       <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
         <h2 className="text-2xl font-semibold mb-4">Parametri hale</h2>
-        <p className="text-gray-600 mb-6 leading-relaxed font-bold">
-          Na kalkulatoru možete odabrati osnovne dimenzije hale (dužina, širina, visina), tip pad krova, kao i specifične elemente konstrukcije (stubovi, binderi, rožnjače). 
-          Na osnovu vaših izbora, kalkulator će automatski prikazati okvirnu procenu cene, 3D vizualizaciju hale sa svim elementima.
+        <p className="text-gray-600 mb-6 leading-relaxed">
+          Na kalkulatoru možete odabrati osnovne dimenzije hale (dužina, širina, visina), tip pad krova, kao i specifične elemente konstrukcije (stubovi, binderi, rožnjače).
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
           <label className="flex flex-col">
@@ -748,12 +763,14 @@ export default function Kalkulator() {
       </div>
 
       {/* Opcije ankerisanja */}
-      {selectedStub && ANKER_PLOCA_CENA[selectedStub.tip] && (
+      {selectedStub && (ANKER_PLOCA_CENA[selectedStub.tip] || ANKER_SRAFO_CENA.find(item => item.tip === selectedStub.tip)) && (() => {
+        const ankerSrafDataForDisplay = ANKER_SRAFO_CENA.find(item => item.tip === selectedStub.tip) || null
+        return (
         <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
           <h2 className="text-2xl font-semibold mb-4">Opcije ankerisanja</h2>
           <div className="space-y-4">
             <div className="p-3 bg-gray-100 rounded-md">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={includeAnkerPloca}
@@ -763,20 +780,25 @@ export default function Kalkulator() {
                       setIncludeAnkerSraf(false) // Isključi anker šrafove ako se anker ploča izabere
                     }
                   }}
-                  className="w-4 h-4 text-red-700 border-gray-300 rounded focus:ring-red-500"
+                  className="w-4 h-4 text-red-700 border-gray-300 rounded focus:ring-red-500 mt-1"
                 />
-                <span className="text-sm">
-                  Anker ploča ({selectedStub.tip}): <strong>{ANKER_PLOCA_CENA[selectedStub.tip]}€</strong> po komadu
+                <div className="flex-1">
+                  <span className="text-sm font-medium">
+                    Anker ploča za betoniranje: <strong>{ANKER_PLOCA_CENA[selectedStub.tip]}€ po stubu</strong>
+                  </span>
+                  <p className="text-xs text-gray-600 mt-1 ml-6">
+                    Opis: Navoj M18 8,8 kvalitet, 30cm dužina
+                  </p>
                   {includeAnkerPloca && (
-                    <span className="ml-2 text-red-700">
+                    <p className="text-xs text-red-700 mt-1 ml-6">
                       (Ukupno: {ANKER_PLOCA_CENA[selectedStub.tip] * calculations.brojStubova}€)
-                    </span>
+                    </p>
                   )}
-                </span>
+                </div>
               </label>
             </div>
             <div className="p-3 bg-gray-100 rounded-md">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={includeAnkerSraf}
@@ -786,21 +808,29 @@ export default function Kalkulator() {
                       setIncludeAnkerPloca(false) // Isključi anker ploču ako se anker šrafovi izaberu
                     }
                   }}
-                  className="w-4 h-4 text-red-700 border-gray-300 rounded focus:ring-red-500"
+                  className="w-4 h-4 text-red-700 border-gray-300 rounded focus:ring-red-500 mt-1"
                 />
-                <span className="text-sm">
-                  Anker šrafovi ({selectedStub.tip}): <strong>{ANKER_PLOCA_CENA[selectedStub.tip]}€</strong> po komadu
-                  {includeAnkerSraf && (
-                    <span className="ml-2 text-red-700">
-                      (Ukupno: {ANKER_PLOCA_CENA[selectedStub.tip] * calculations.brojStubova}€)
-                    </span>
+                <div className="flex-1">
+                  <span className="text-sm font-medium">
+                    Anker šrafovi: <strong>{ankerSrafDataForDisplay ? ankerSrafDataForDisplay.cena : 0}€ po stubu</strong>
+                  </span>
+                  {ankerSrafDataForDisplay && (
+                    <p className="text-xs text-gray-600 mt-1 ml-6">
+                      Opis: M{ankerSrafDataForDisplay.debljina.replace('mm', '')} x {ankerSrafDataForDisplay.duzina}
+                    </p>
                   )}
-                </span>
+                  {includeAnkerSraf && ankerSrafDataForDisplay && (
+                    <p className="text-xs text-red-700 mt-1 ml-6">
+                      (Ukupno: {ankerSrafDataForDisplay.cena * calculations.brojStubova}€)
+                    </p>
+                  )}
+                </div>
               </label>
             </div>
           </div>
         </section>
-      )}
+        )
+      })()}
 
       {/* Rezultati */}
       <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
@@ -842,22 +872,7 @@ export default function Kalkulator() {
           <div className="mb-4">
             <h3 className="text-xl font-bold text-gray-900 mb-3">Okvirna cena konstrukcije</h3>
             <div className="text-2xl font-bold text-gray-900 mb-2">
-              {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 ? (
-                <>
-                  {formatPrice(roundUpTo50(calculations.ukupnaCenaBezAnkerPloca))} €
-                  {includeAnkerSraf && calculations.ukupnaCenaAnkerPloca > 0 && (
-                    <span className="text-lg"> + {formatPrice(roundUpTo50(calculations.ukupnaCenaAnkerPloca))} € (anker šrafovi)</span>
-                  )}
-                  {includeAnkerPloca && !includeAnkerSraf && calculations.ukupnaCenaAnkerPloca > 0 && (
-                    <span className="text-lg"> + {formatPrice(roundUpTo50(calculations.ukupnaCenaAnkerPloca))} € (anker ploča)</span>
-                  )}
-                  <span className="text-lg"> = {formatPrice(roundUpTo50(calculations.ukupnaCena))} €</span>
-                </>
-              ) : (
-                <>
-                  {formatPrice(roundUpTo50(calculations.ukupnaCena))} €
-                </>
-              )}
+              {formatPrice(calculations.ukupnaCena)} €
             </div>
           </div>
           
@@ -868,10 +883,10 @@ export default function Kalkulator() {
               <li>• <strong>{calculations.brojBindera} bindera</strong> {binderData && dostupniBinderi.length > 0 && `(${dostupniBinderi[0].tip} x ${dostupniBinderi[0].debljina})`}</li>
               <li>• <strong>{calculations.ukupanBrojRoznjaca} metara rožnjača</strong> {tipRoznjace && ROZNJACE[tipRoznjace] && `(${tipRoznjace} x 2.8mm)`}</li>
               {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
-                <li>• <strong>{calculations.brojStubova} anker ploča</strong> ({selectedStub?.tip})</li>
+                <li>• <strong>{calculations.brojStubova} anker ploča</strong> (Navoj M18 8,8 kvalitet, 30cm dužina)</li>
               )}
-              {includeAnkerSraf && calculations.ukupnaCenaAnkerPloca > 0 && (
-                <li>• <strong>{calculations.brojStubova} anker šrafova</strong> ({selectedStub?.tip})</li>
+              {includeAnkerSraf && calculations.ukupnaCenaAnkerSraf > 0 && calculations.ankerSrafData && (
+                <li>• <strong>{calculations.brojStubova} anker šrafova</strong> (M{calculations.ankerSrafData.debljina.replace('mm', '')} x {calculations.ankerSrafData.duzina})</li>
               )}
             </ul>
           </div>
@@ -887,6 +902,9 @@ export default function Kalkulator() {
             <p className="text-sm text-gray-600 italic">
               <strong>Napomena:</strong> Prikazana cena je <strong>okvirna</strong> i može varirati. 
               Za <strong>preciznu cenu</strong> i finalnu ponudu, molimo kontaktirajte nas.
+              <br />
+              <br />
+              <strong>Napomena:</strong> Prevoz i montaza nisu ukljuceni u cenu. <strong>Montažu ne radimo</strong>, ali po potrebi možemo organizovati prevoz.
             </p>
           </div>
         </div>
@@ -942,11 +960,7 @@ export default function Kalkulator() {
         <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
           <div className="space-y-4 text-sm leading-relaxed whitespace-pre-line">
             <p>
-              <strong>Cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)} je: {formatPrice(roundUpTo50(calculations.ukupnaCenaBezAnkerPloca))}€</strong>
-              {includeAnkerPloca && calculations.ukupnaCenaAnkerPloca > 0 && (
-                <span> plus <strong>{formatPrice(roundUpTo50(calculations.ukupnaCenaAnkerPloca))}€</strong> su anker ploče</span>
-              )}
-              .
+              <strong>Cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)} je: {formatPrice(calculations.ukupnaCena)}€</strong>.
             </p>
 
             <div className="mt-4">
