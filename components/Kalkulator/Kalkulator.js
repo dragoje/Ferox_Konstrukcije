@@ -538,10 +538,9 @@ export default function Kalkulator() {
                 onChange={e => setSelectedStubIndex(parseInt(e.target.value))}
               >
                 {dostupniStubovi.map((stub, index) => {
-                  const dodatnaInfo = stub.dodatnaTezina ? ` +${stub.dodatnaTezina}kg` : ''
                   return (
                     <option key={index} value={index}>
-                      {stub.tip} x {stub.debljina} - {stub.tezina}kg{dodatnaInfo}
+                      {stub.tip} x {stub.debljina}
                     </option>
                   )
                 })}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getHalaBySlug, getAllHalaSlugs } from '@/data/tipoviHala'
 
 export default function HalaDetailPage({ params }) {
@@ -73,22 +74,15 @@ export default function HalaDetailPage({ params }) {
             {/* Glavna slika */}
             <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden relative">
               {hala.images && hala.images[selectedImageIndex] ? (
-                <div className="w-full h-full flex items-center justify-center">
-                  {/* Placeholder dok ne dodas prave slike */}
-                  <div className="text-center text-gray-400">
-                    <div className="text-6xl mb-2">{hala.icon}</div>
-                    <p className="text-sm">Slika {selectedImageIndex + 1}</p>
-                    <p className="text-xs mt-2">{hala.images[selectedImageIndex]}</p>
-                  </div>
-                  {/* Kada imaš slike, koristi:
-                  <Image
-                    src={hala.images[selectedImageIndex]}
-                    alt={`${hala.title} - Slika ${selectedImageIndex + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                  */}
-                </div>
+                <Image
+                  src={hala.images[selectedImageIndex]}
+                  alt={`${hala.title} - Slika ${selectedImageIndex + 1}`}
+                  fill
+                  className="object-cover"
+                  quality={100}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority={selectedImageIndex === 0}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">
                   <div className="text-center">
@@ -112,17 +106,14 @@ export default function HalaDetailPage({ params }) {
                         : 'border-transparent hover:border-gray-400'
                     }`}
                   >
-                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
-                      {index + 1}
-                    </div>
-                    {/* Kada imaš slike:
                     <Image
                       src={image}
                       alt={`${hala.title} thumbnail ${index + 1}`}
                       fill
                       className="object-cover"
+                      quality={90}
+                      sizes="(max-width: 768px) 25vw, 12.5vw"
                     />
-                    */}
                   </button>
                 ))}
               </div>

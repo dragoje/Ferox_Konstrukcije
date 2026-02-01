@@ -96,7 +96,7 @@ export async function POST(request) {
     try {
       // Koristi verifikovani domen ako je postavljen, inače fallback na test email
       const fromEmail = process.env.RESEND_FROM_EMAIL || 'Ferox Konstrukcije <onboarding@resend.dev>'
-      const toEmail = process.env.RESEND_TO_EMAIL || 'timotijevicdragoje@gmail.com'
+      const toEmail = process.env.RESEND_TO_EMAIL || 'nikolaslavkovic95@gmail.com'
 
       const result = await resend.emails.send({
         from: fromEmail,

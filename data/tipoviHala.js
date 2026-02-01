@@ -5,30 +5,58 @@ export const tipoviHala = [
   {
     id: 1,
     slug: 'tip-hale-1',
-    title: 'Tip Hale 1',
-    shortDescription: 'Kratak opis tipa hale 1',
-    description: 'Detaljan opis tipa hale 1. Ovo je mesto gde možeš dodati sve informacije o ovom tipu hale - karakteristike, prednosti, primene, itd.',
-    features: ['Karakteristika 1', 'Karakteristika 2', 'Karakteristika 3'],
-    cardImage: '/hale/tip1/kartica.jpg', // Glavna slika za karticu na listi proizvoda
+    title: 'Konstrukcija 16x8x4',
+    shortDescription: '',
+    description: `Montazna konstrukcija za halu dimenzija 16x8m.
+
+Uz konstrukciju se dobija crtež sa dimenzijama i rasporedom stubova. Moguća izrada i odgovarajućih ankrer ploča sa šrafovoma za betoniranje.
+
+Tezina konstrukcije je oko 2100kg.
+
+Profili za stubove su 100x100x3.8mm, za bindere 80x60x2.8 i za ispunu 40x40x2.8mm. Profili za roznjace su 80x40x2.8.
+
+Ploce za ankerisanje su 200x200x10mm, za vezivanje bindera su 180x150x10mm.
+
+Cela konstrukcija ja ofarbana u 2 ruke osnovnom anti-korozivnom farbom.
+
+U cenu su uračunati stubovi sa zavarenim anker plocama, binderi i rožnjače. Binderi se šrafe za stubove a rožnjače se vare na L profile zavarene na bindere.
+
+Cena anker ploca za betoniranje sa ankerima 30cm duzine i vijcima m18 8.8 je 17€ po komadu.`,
+    features: [' stubovi 100x100x3.8mm', ' binderi 80x60x2.8', ' rožnjače 80x40x2.8', ' ispuna 40x40x2.8mm', ' vezivanje stubova 200x200x10mm', ' vezivanje bindera 180x150x10mm', ' ofarbana u 2 ruke osnovnom antikorozivnom farbom'],
+    cardImage: '/hale/tip1/slika1.PNG', // Glavna slika za karticu na listi proizvoda
     images: [
-      '/hale/tip1/slika1.jpg',
-      '/hale/tip1/slika2.jpg',
-      '/hale/tip1/slika3.jpg',
+      '/hale/tip1/slika1.PNG',
+      '/hale/tip1/slika2.PNG',
+      '/hale/tip1/slika3.PNG',
+      '/hale/tip1/slika4.PNG',
     ],
     icon: '🏗️'
   },
   {
     id: 2,
     slug: 'tip-hale-2',
-    title: 'Tip Hale 2',
-    shortDescription: 'Kratak opis tipa hale 2',
-    description: 'Detaljan opis tipa hale 2. Ovo je mesto gde možeš dodati sve informacije o ovom tipu hale - karakteristike, prednosti, primene, itd.',
-    features: ['Karakteristika 1', 'Karakteristika 2', 'Karakteristika 3'],
-    cardImage: '/hale/tip2/kartica.jpg', // Glavna slika za karticu na listi proizvoda
+    title: 'Konstrukcija 15x10x4.5',
+    shortDescription: '',
+    description:`Montazna konstrukcija za halu dimenzija 15x10m.
+
+Uz konstrukciju se dobija crtež sa dimenzijama i rasporedom stubova. Moguća izrada i odgovarajućih ankrer ploča sa šrafovoma za betoniranje.
+
+Tezina konstrukcije je oko 2800kg.
+
+Profili za stubove su 120x120x3.8mm, za bindere 80x80x3.8 i za ispunu 40x40x2.8mm. Profili za roznjace su 80x40x2.8.
+
+Ploce za ankerisanje su 200x200x10mm, za vezivanje bindera su 180x150x10mm.
+
+Cela konstrukcija ja ofarbana u 2 ruke osnovnom anti-korozivnom farbom.
+
+U cenu su uračunati stubovi sa zavarenim anker plocama, binderi i rožnjače. Binderi se šrafe za stubove a rožnjače se vare na L profile zavarene na bindere.
+
+Cena anker ploca za betoniranje sa ankerima 30cm duzine i vijcima m18 8.8 je 17€ po komadu.`,
+    features: [' stubovi 120x120x3.8mm', ' binderi 80x80x3.8', ' rožnjače 80x40x2.8', ' ispuna 40x40x2.8mm', ' vezivanje stubova 200x200x10mm', ' vezivanje bindera 180x150x10mm', ' ofarbana u 2 ruke osnovnom antikorozivnom farbom'],
+    cardImage: '/hale/tip2/slika1.PNG', // Glavna slika za karticu na listi proizvoda
     images: [
-      '/hale/tip2/slika1.jpg',
-      '/hale/tip2/slika2.jpg',
-      '/hale/tip2/slika3.jpg',
+      '/hale/tip2/slika1.PNG',
+      '/hale/tip2/slika2.PNG',
     ],
     icon: '🏭'
   },
