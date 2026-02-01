@@ -166,7 +166,7 @@ export default function HalaDetailPage({ params }) {
           </div>
         </div>
 
-        {/* Navigacija do drugih tipova */}
+        {/* Navigacija do drugih tipova
         <div className="mt-12 border-t pt-8">
           <h2 className="text-2xl font-bold mb-6 text-center">Ostali Tipovi Hala</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -186,7 +186,7 @@ export default function HalaDetailPage({ params }) {
                 )
               })}
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   )

@@ -70,13 +70,20 @@ export default function Kalkulator() {
   // Dostupne opcije za izabranu dužinu stuba
   const dostupniStubovi = STUBOVI_PO_DUZINI[stubDuzina] || []
   const selectedStub = dostupniStubovi[selectedStubIndex] || dostupniStubovi[0]
+  
+  // Predloženi index - uvek druga opcija (indeks 1), ili prva ako ima samo jedna opcija
+  const suggestedStubIndex = dostupniStubovi.length > 1 ? 1 : 0
 
-  // Kada se promeni visina hale, resetuj izbor stuba na prvi dostupan
+  // Kada se promeni visina hale, automatski postavi predloženu opciju (druga opcija)
   useEffect(() => {
-    if (dostupniStubovi.length > 0 && selectedStubIndex >= dostupniStubovi.length) {
-      setSelectedStubIndex(0)
+    if (dostupniStubovi.length > 0) {
+      if (dostupniStubovi.length > 1) {
+        setSelectedStubIndex(1) // Druga opcija
+      } else {
+        setSelectedStubIndex(0) // Prva opcija ako ima samo jedna
+      }
     }
-  }, [height, dostupniStubovi.length, selectedStubIndex])
+  }, [height, dostupniStubovi.length])
 
   // --- Binderi ---
   const [binderType, setBinderType] = useState('standardni') // Za 8m+: "standardni" ili "jaci"
@@ -134,6 +141,25 @@ export default function Kalkulator() {
 
   // Koristi korisnikov unos ili predloženu vrednost (minimum 2)
   const finalBrojBindera = Math.max(2, brojBindera !== null ? brojBindera : suggestedBrojBindera)
+  
+  // Izračunaj razmak između stubova (razmak = dužina / (broj bindera - 1))
+  const razmakIzmedjuStubova = finalBrojBindera > 1 ? length / (finalBrojBindera - 1) : length
+  
+  // Automatski određuj predloženi tip rožnjače na osnovu razmaka između stubova
+  const suggestedTipRoznjace = useMemo(() => {
+    if (razmakIzmedjuStubova <= 3) {
+      return '60x40'
+    } else if (razmakIzmedjuStubova <= 4) {
+      return '80x40'
+    } else {
+      return '100x50'
+    }
+  }, [razmakIzmedjuStubova])
+  
+  // Kada se promeni razmak između stubova, automatski ažuriraj tip rožnjače
+  useEffect(() => {
+    setTipRoznjace(suggestedTipRoznjace)
+  }, [suggestedTipRoznjace])
 
   // Kada se promeni dužina, ažuriraj predlog (samo ako korisnik nije ručno uneo vrednost)
   useEffect(() => {
@@ -540,11 +566,16 @@ export default function Kalkulator() {
                 {dostupniStubovi.map((stub, index) => {
                   return (
                     <option key={index} value={index}>
-                      {stub.tip} x {stub.debljina}
+                      {stub.tip} x {stub.debljina} {index === suggestedStubIndex ? '(predloženo)' : ''}
                     </option>
                   )
                 })}
               </select>
+              {dostupniStubovi.length > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Predloženo: {dostupniStubovi[suggestedStubIndex]?.tip} x {dostupniStubovi[suggestedStubIndex]?.debljina}
+                </p>
+              )}
             </label>
           </div>
           {selectedStub && (
@@ -602,22 +633,22 @@ export default function Kalkulator() {
               </p>
             </label>
           </div>
-          {hasBinderTypeOptions(widthCategory) && (
-            <div className="mb-4">
-              <label className="flex flex-col">
-                <span className="mb-2">Tip bindera</span>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => setBinderType('standardni')}
-                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      binderType === 'standardni'
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    Standardna nosivost ({BINDERI_PO_SIRINI[widthCategory]?.standardni?.masa || 0}kg)
-                  </button>
+          <div className="mb-4">
+            <label className="flex flex-col">
+              <span className="mb-2">Tip bindera</span>
+              <div className="flex gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setBinderType('standardni')}
+                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    binderType === 'standardni'
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  Standardna nosivost
+                </button>
+                {hasBinderTypeOptions(widthCategory) && (
                   <button
                     type="button"
                     onClick={() => setBinderType('jaci')}
@@ -627,10 +658,24 @@ export default function Kalkulator() {
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
-                    Veća nosivost ({BINDERI_PO_SIRINI[widthCategory]?.jaci?.masa || 0}kg)
+                    Veća nosivost
                   </button>
-                </div>
-              </label>
+                )}
+              </div>
+            </label>
+          </div>
+          {binderData && dostupniBinderi.length > 0 && (
+            <div className="mb-4">
+              <div className="p-3 bg-gray-100 rounded-md">
+                <p className="font-semibold text-sm mb-2 text-gray-900">Profili bindera:</p>
+                <ul className="space-y-1">
+                  {dostupniBinderi.map((binder, index) => (
+                    <li key={index} className="text-m text-gray-700">
+                      • {binder.tip}x{binder.debljina}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
           {binderData && isAdmin && (
@@ -681,10 +726,13 @@ export default function Kalkulator() {
               >
                 {Object.keys(ROZNJACE).map(tip => (
                   <option key={tip} value={tip}>
-                    {tip} x 2.8mm
+                    {tip} x 2.8mm {tip === suggestedTipRoznjace ? '(predloženo)' : ''}
                   </option>
                 ))}
               </select>
+              <p className="text-xs text-gray-500 mt-1">
+                Predloženo: {suggestedTipRoznjace} x 2.8mm (razmak između stubova: {razmakIzmedjuStubova.toFixed(2)}m)
+              </p>
             </label>
           </div>
           {tipRoznjace && ROZNJACE[tipRoznjace] && isAdmin && (

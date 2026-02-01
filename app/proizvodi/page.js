@@ -41,9 +41,14 @@ export default function Proizvodi() {
                 )}
               </div>
 
-              {/* Naslov */}
+              {/* Naslov i cena */}
               <div className="p-6">
-                <h2 className="text-2xl font-semibold text-center">{hala.title}</h2>
+                <h2 className="text-2xl font-semibold text-center mb-2">{hala.title}</h2>
+                {hala.price && (
+                  <p className="text-2xl font-semibold text-red-700 text-center">
+                    {typeof hala.price === 'number' ? `${hala.price.toLocaleString()} €` : hala.price}
+                  </p>
+                )}
               </div>
             </Link>
           ))}
