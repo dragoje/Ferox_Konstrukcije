@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import jsPDF from 'jspdf'
 import Shed3DVisualization from './Shed3DVisualization'
 import { STUBOVI_PO_DUZINI, BINDERI_PO_SIRINI, ROZNJACE, ANKER_PLOCA_CENA, ANKER_SRAFO_CENA } from '@/data/konstrukcijaData'
+import { addProjekat } from '@/lib/projektiStorage'
 
 // Helper function to format numbers with comma as thousand separator
 const formatPrice = (value) => {
@@ -17,9 +18,13 @@ const roundUpTo50 = (value) => {
 }
 
 export default function Kalkulator() {
-  // --- Admin Mode Check ---
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [isAdmin, setIsAdmin] = useState(false)
+  const capture3DRef = useRef(null)
+  const [showKreirajModal, setShowKreirajModal] = useState(false)
+  const [kreirajNaziv, setKreirajNaziv] = useState('')
+  const [kreirajRok, setKreirajRok] = useState('')
 
   useEffect(() => {
     // Proveri URL parametar
@@ -478,6 +483,55 @@ export default function Kalkulator() {
     }
   }
 
+  const kreirajProjekatIzKalkulatora = async (e) => {
+    e.preventDefault()
+    const slika3D = capture3DRef.current?.() || null
+    const detalji = {
+      dimenzije: { length, width, height },
+      padKrova: padKrova === 1 ? 'jedna voda' : 'dve vode',
+      brojStubova: calculations.brojStubova,
+      brojBindera: calculations.brojBindera,
+      ukupanBrojRoznjaca: calculations.ukupanBrojRoznjaca,
+      tipStubova: selectedStub ? `${selectedStub.tip} x ${selectedStub.debljina}` : null,
+      tipBindera: binderData && dostupniBinderi.length > 0 ? `${dostupniBinderi[0].tip} x ${dostupniBinderi[0].debljina}` : null,
+      tipRoznjaca: tipRoznjace ? `${tipRoznjace} x 2.8mm` : null,
+      ukupnaTezina: calculations.ukupnaTezina,
+      ukupnaTezinaStubova: calculations.ukupnaTezinaStubova,
+      ukupnaTezinaBindera: calculations.ukupnaTezinaBindera,
+      ukupnaTezinaRoznjaca: calculations.ukupnaTezinaRoznjaca,
+      ukupnaCena: calculations.ukupnaCena,
+      cenaPoMetru: calculations.cenaPoMetru,
+      cenaStubova: calculations.ukupnaCenaStubova,
+      cenaBindera: calculations.ukupnaCenaBindera,
+      cenaRoznjaca: calculations.ukupnaCenaRoznjaca,
+      includeAnkerPloca,
+      includeAnkerSraf,
+      ukupnaCenaAnkerPloca: calculations.ukupnaCenaAnkerPloca,
+      ukupnaCenaAnkerSraf: calculations.ukupnaCenaAnkerSraf,
+    }
+    const novi = {
+      id: crypto.randomUUID(),
+      naziv: kreirajNaziv.trim() || 'Projekat iz kalkulatora',
+      dimenzije: `${length} x ${width} x ${height}`,
+      rok: kreirajRok || null,
+      status: 'novo',
+      datumKreiranja: new Date().toISOString(),
+      datumAzuriranja: new Date().toISOString(),
+      detalji,
+      slika3D,
+    }
+    try {
+      await addProjekat(novi)
+      setShowKreirajModal(false)
+      setKreirajNaziv('')
+      setKreirajRok('')
+      router.push('/admin/projekti')
+    } catch (err) {
+      console.error('Greška pri kreiranju projekta:', err)
+      alert('Greška pri kreiranju projekta. Proverite internet konekciju i Supabase podešavanja.')
+    }
+  }
+
   return (
     <div className="p-8 max-w-6xl mx-auto bg-gray-50 min-h-screen font-sans text-gray-800">
       <h1 className="text-4xl font-bold mb-8 text-center text-gray-900">Kalkulator</h1>
@@ -910,16 +964,29 @@ export default function Kalkulator() {
           </div>
 
         </div>
-        <div className="mt-6 flex justify-center">
-          {isAdmin && <button
-            onClick={exportToPDF}
-            className="px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg shadow-md hover:bg-gray-800 transition-colors duration-200 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Izvezi u PDF
-          </button>}
+        <div className="mt-6 flex flex-wrap justify-center gap-4">
+          {isAdmin && (
+            <>
+              <button
+                onClick={exportToPDF}
+                className="px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg shadow-md hover:bg-gray-800 transition-colors duration-200 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Izvezi u PDF
+              </button>
+              <button
+                onClick={() => setShowKreirajModal(true)}
+                className="px-6 py-3 bg-red-700 text-white font-semibold rounded-lg shadow-md hover:bg-red-800 transition-colors duration-200 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Kreiraj projekat
+              </button>
+            </>
+          )}
         </div>
       </section>
 
@@ -939,6 +1006,7 @@ export default function Kalkulator() {
             brojStubova={calculations.brojStubova}
             brojRoznjaca={calculations.ukupanBrojRoznjaca}
             binderProfili={dostupniBinderi}
+            onCaptureReady={(fn) => { capture3DRef.current = fn }}
           />
         </div>
       </section>
@@ -1080,6 +1148,55 @@ export default function Kalkulator() {
           </label>
         </div>
       </section>
+      )}
+
+      {/* Modal Kreiraj projekat */}
+      {showKreirajModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-semibold mb-4">Kreiraj projekat iz kalkulatora</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Svi podaci (dimenzije, stubovi, binderi, rožnjače, cene) će biti sačuvani u projekat. Uključena je i 3D vizualizacija.
+            </p>
+            <form onSubmit={kreirajProjekatIzKalkulatora} className="space-y-4">
+              <label className="flex flex-col">
+                Naziv projekta *
+                <input
+                  type="text"
+                  value={kreirajNaziv}
+                  onChange={(e) => setKreirajNaziv(e.target.value)}
+                  placeholder="npr. Hala za Jovanovića"
+                  className="mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  required
+                />
+              </label>
+              <label className="flex flex-col">
+                Rok do kada treba da se završi
+                <input
+                  type="date"
+                  value={kreirajRok}
+                  onChange={(e) => setKreirajRok(e.target.value)}
+                  className="mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </label>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-red-700 text-white rounded-md font-medium hover:bg-red-800"
+                >
+                  Kreiraj
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowKreirajModal(false); setKreirajNaziv(''); setKreirajRok('') }}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md font-medium hover:bg-gray-300"
+                >
+                  Otkaži
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   )

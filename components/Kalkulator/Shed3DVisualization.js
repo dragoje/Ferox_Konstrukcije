@@ -330,7 +330,8 @@ export default function Shed3DVisualization({
   brojBindera,
   brojStubova,
   brojRoznjaca,
-  binderProfili = []
+  binderProfili = [],
+  onCaptureReady,
 }) {
   // Calculate camera position based on shed size
   const maxDimension = Math.max(length, width, height)
@@ -340,8 +341,13 @@ export default function Shed3DVisualization({
     <div className="w-full h-[600px] bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg border border-gray-300 shadow-lg relative">
       <Canvas
         shadows
-        gl={{ antialias: true }}
+        gl={{ antialias: true, preserveDrawingBuffer: true }}
         camera={{ position: [cameraDistance, cameraDistance * 0.8, cameraDistance], fov: 50 }}
+        onCreated={({ gl }) => {
+          if (onCaptureReady) {
+            onCaptureReady(() => gl.domElement?.toDataURL('image/png') || null)
+          }
+        }}
       >
         {/* Lighting */}
         <ambientLight intensity={0.5} />

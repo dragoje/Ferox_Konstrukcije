@@ -2,11 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function Header() {
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    setIsAdmin(localStorage.getItem('kalkulator_admin') === 'true')
+  }, [pathname])
 
   const navItems = [
     { href: '/', label: 'Početna' },
@@ -45,6 +50,18 @@ export default function Header() {
             >
               Kalkulator
             </Link>
+            {isAdmin && (
+              <Link
+                href="/admin/projekti"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  pathname === '/admin/projekti'
+                    ? 'bg-red-700 text-white'
+                    : 'text-red-700 hover:bg-red-50'
+                }`}
+              >
+                Projekti
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -102,6 +119,19 @@ export default function Header() {
             >
               Kalkulator
             </Link>
+            {isAdmin && (
+              <Link
+                href="/admin/projekti"
+                className={`block px-4 py-2 rounded-md text-sm font-medium mt-2 ${
+                  pathname === '/admin/projekti'
+                    ? 'bg-red-700 text-white'
+                    : 'text-red-700 hover:bg-red-50'
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Projekti
+              </Link>
+            )}
           </nav>
         )}
       </div>

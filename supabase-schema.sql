@@ -1,0 +1,19 @@
+-- Pokreni ovaj SQL u Supabase Dashboard -> SQL Editor
+-- Kreira tabelu projekti za Ferox Konstrukcije
+
+CREATE TABLE IF NOT EXISTS projekti (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  naziv TEXT NOT NULL DEFAULT 'Projekat bez naziva',
+  dimenzije TEXT DEFAULT '',
+  napomena TEXT,
+  rok DATE,
+  status TEXT NOT NULL DEFAULT 'novo',
+  datum_kreiranja TIMESTAMPTZ NOT NULL DEFAULT now(),
+  datum_azuriranja TIMESTAMPTZ NOT NULL DEFAULT now(),
+  detalji JSONB,
+  slika_3d TEXT
+);
+
+-- Indeksi za brže pretraživanje
+CREATE INDEX IF NOT EXISTS idx_projekti_status ON projekti(status);
+CREATE INDEX IF NOT EXISTS idx_projekti_datum ON projekti(datum_kreiranja DESC);
