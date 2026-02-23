@@ -449,14 +449,11 @@ export default function Projekti() {
                       </span>
                     </p>
                   )}
-                  {p.mobil && (
-                    <p className="text-gray-500 mt-1 text-sm">Tel: {p.mobil}</p>
-                  )}
                   {p.napomena && (
                     <p className="text-gray-500 mt-1 text-sm">Napomena: {p.napomena}</p>
                   )}
                   {p.todos && p.todos.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
+                    <div className="mt-4 pt-3 flex flex-wrap gap-1.5 border-t border-gray-100">
                       {p.todos.map((t) => (
                         <label
                           key={t.id}
@@ -475,9 +472,6 @@ export default function Projekti() {
                       ))}
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 mt-2">
-                    Kreirano: {formatDatum(p.datumKreiranja)} • Ažurirano: {formatDatum(p.datumAzuriranja)}
-                  </p>
                 </div>
 
                 <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
@@ -495,14 +489,12 @@ export default function Projekti() {
                       />
                     </svg>
                   </button>
-                  {p.detalji && (
-                    <button
-                      onClick={() => setDetaljiProjekat(p)}
-                      className="px-3 py-1.5 text-sm bg-sky-50 text-sky-700 border border-sky-200 rounded-md hover:bg-sky-100 font-medium"
-                    >
-                      Detaljnije
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setDetaljiProjekat(p)}
+                    className="px-3 py-1.5 text-sm bg-sky-50 text-sky-700 border border-sky-200 rounded-md hover:bg-sky-100 font-medium"
+                  >
+                    Detaljnije
+                  </button>
                 </div>
               </div>
             )
@@ -614,6 +606,9 @@ export default function Projekti() {
                   </ul>
                 </div>
               )}
+              <div className="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                Kreirano: {formatDatum(detaljiProjekat.datumKreiranja)} • Ažurirano: {formatDatum(detaljiProjekat.datumAzuriranja)}
+              </div>
               {detaljiProjekat.detalji ? (
                 <div className="space-y-4">
                   <div>

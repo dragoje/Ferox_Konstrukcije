@@ -169,8 +169,7 @@ export default function ProjektiKalendar({ projekti = [], izabraniDatum = null, 
       </div>
 
       <div className="p-2">
-        <div className="relative">
-          <div className="grid grid-cols-7 gap-px text-center">
+        <div className="grid grid-cols-7 gap-0 text-center overflow-visible">
             {DANI_NEDELJE.map((d, i) => (
               <div key={i} className="text-[9px] font-medium text-gray-500 py-0.5">
                 {d}
@@ -196,22 +195,35 @@ export default function ProjektiKalendar({ projekti = [], izabraniDatum = null, 
                   key={i}
                   type="button"
                   onClick={() => onDayClick?.(dan, projektiNaDan)}
-                  className={`min-h-[44px] flex flex-col items-center justify-start pt-0.5 px-0.5 pb-6 rounded-sm transition-colors ${
+                  className={`min-h-[44px] flex flex-col items-center justify-start pt-0.5 px-0 border-r border-b border-gray-200/50 transition-colors ${
                     isSelected ? 'bg-blue-50 ring-1 ring-blue-300' : isToday ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'
                   }`}
                 >
-                  <span className={`text-[10px] font-medium leading-tight ${isToday ? 'text-gray-900' : 'text-gray-700'}`}>
+                  <span className={`text-[10px] font-medium leading-tight px-0.5 ${isToday ? 'text-gray-900' : 'text-gray-700'}`}>
                     {dan.getDate()}
                   </span>
-                  <div className="flex flex-wrap justify-center gap-0.5 mt-0.5 flex-1 min-h-0">
-                    {projektiNaDan.filter((p) => normalizeStatus(p.status) === 'zavrseno').map((p) => {
-                      const found = projektiUMesecuSvi.find((x) => x.id === p.id)
-                      const colorIdx = found ? found.colorIdx : 0
+                  <div className="w-full mt-0.5 flex-1 min-h-0 flex flex-col justify-start gap-0.5 overflow-visible">
+                    {projektiTimeline.map((pTimeline) => {
+                      const pNaDan = projektiNaDan.find((x) => x.id === pTimeline.id)
+                      if (!pNaDan) {
+                        return <div key={pTimeline.id} className="w-full h-1.5 flex-shrink-0" aria-hidden />
+                      }
+                      const colorIdx = pTimeline.colorIdx
+                      const jeZavrsen = normalizeStatus(pNaDan.status) === 'zavrseno'
+                      if (jeZavrsen) {
+                        return (
+                          <span
+                            key={pTimeline.id}
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 self-center ${PROJEKAT_BOJE[colorIdx] || 'bg-gray-400'}`}
+                            title={pNaDan.naziv}
+                          />
+                        )
+                      }
                       return (
-                        <span
-                          key={p.id}
-                          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PROJEKAT_BOJE[colorIdx] || 'bg-gray-400'}`}
-                          title={p.naziv}
+                        <div
+                          key={pTimeline.id}
+                          className={`h-1.5 rounded-none flex-shrink-0 -mx-px w-[calc(100%+2px)] ${PROJEKAT_BOJE[colorIdx] || 'bg-gray-400'}`}
+                          title={pNaDan.naziv}
                         />
                       )
                     })}
@@ -219,21 +231,6 @@ export default function ProjektiKalendar({ projekti = [], izabraniDatum = null, 
                 </button>
               )
             })}
-          </div>
-          {/* Kontinuirane linije – jedan bar po projektu */}
-          {projektiTimeline.length > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 flex flex-col gap-0.5 pointer-events-none">
-              {projektiTimeline.map((p) => (
-                <div key={p.id} className="relative h-1.5 w-full">
-                  <div
-                    className={`absolute h-full rounded-sm ${PROJEKAT_BOJE[p.colorIdx]}`}
-                    style={{ left: `${p.left}%`, width: `${p.width}%` }}
-                    title={p.naziv}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
         </div>
         {projektiTimeline.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-1 pt-2 mt-1 border-t border-gray-100">
