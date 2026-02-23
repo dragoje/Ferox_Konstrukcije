@@ -146,76 +146,82 @@ export default function ProjektiKalendar({ projekti = [], izabraniDatum = null, 
       </div>
 
       <div className="p-2">
-        <div className="grid grid-cols-7 gap-0 text-center">
-          {DANI_NEDELJE.map((d, i) => (
-            <div key={i} className="text-[9px] font-medium text-gray-500 py-0.5">
-              {d}
-            </div>
-          ))}
-          {dani.map((dan, i) => {
-            if (!dan) {
-              return <div key={`e-${i}`} className="min-h-[44px]" />
-            }
-            const projektiNaDan = projektiZaDan(dan, projekti)
-            const isToday =
-              dan.getDate() === new Date().getDate() &&
-              dan.getMonth() === new Date().getMonth() &&
-              dan.getFullYear() === new Date().getFullYear()
-            const isSelected =
-              izabraniDatum &&
-              dan.getDate() === izabraniDatum.getDate() &&
-              dan.getMonth() === izabraniDatum.getMonth() &&
-              dan.getFullYear() === izabraniDatum.getFullYear()
+        <div className="relative">
+          <div className="grid grid-cols-7 gap-px text-center">
+            {DANI_NEDELJE.map((d, i) => (
+              <div key={i} className="text-[9px] font-medium text-gray-500 py-0.5">
+                {d}
+              </div>
+            ))}
+            {dani.map((dan, i) => {
+              if (!dan) {
+                return <div key={`e-${i}`} className="min-h-[44px] bg-gray-50/30" />
+              }
+              const projektiNaDan = projektiZaDan(dan, projekti)
+              const isToday =
+                dan.getDate() === new Date().getDate() &&
+                dan.getMonth() === new Date().getMonth() &&
+                dan.getFullYear() === new Date().getFullYear()
+              const isSelected =
+                izabraniDatum &&
+                dan.getDate() === izabraniDatum.getDate() &&
+                dan.getMonth() === izabraniDatum.getMonth() &&
+                dan.getFullYear() === izabraniDatum.getFullYear()
 
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => onDayClick?.(dan, projektiNaDan)}
-                className={`min-h-[44px] flex flex-col items-center justify-start pt-0.5 px-0 pb-0 rounded-none border border-gray-200/50 transition-colors ${
-                  isSelected ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-200' : isToday ? 'bg-gray-100 border-gray-300' : 'border-transparent hover:bg-gray-50'
-                }`}
-              >
-                <span className={`text-[10px] font-medium leading-tight px-0.5 ${isToday ? 'text-gray-900' : 'text-gray-700'}`}>
-                  {dan.getDate()}
-                </span>
-                <div className="w-full mt-0.5 flex-1 min-h-0 flex flex-col justify-end gap-0.5">
-                  {projektiNaDan.map((p) => {
-                    const found = projektiUMesecuSvi.find((x) => x.id === p.id)
-                    const colorIdx = found ? found.colorIdx : 0
-                    const jeZavrsen = normalizeStatus(p.status) === 'zavrseno'
-                    if (jeZavrsen) {
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onDayClick?.(dan, projektiNaDan)}
+                  className={`min-h-[44px] flex flex-col items-center justify-start pt-0.5 px-0.5 pb-6 rounded-sm transition-colors ${
+                    isSelected ? 'bg-blue-50 ring-1 ring-blue-300' : isToday ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'
+                  }`}
+                >
+                  <span className={`text-[10px] font-medium leading-tight ${isToday ? 'text-gray-900' : 'text-gray-700'}`}>
+                    {dan.getDate()}
+                  </span>
+                  <div className="flex flex-wrap justify-center gap-0.5 mt-0.5 flex-1 min-h-0">
+                    {projektiNaDan.filter((p) => normalizeStatus(p.status) === 'zavrseno').map((p) => {
+                      const found = projektiUMesecuSvi.find((x) => x.id === p.id)
+                      const colorIdx = found ? found.colorIdx : 0
                       return (
                         <span
                           key={p.id}
-                          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 self-center ${PROJEKAT_BOJE[colorIdx] || 'bg-gray-400'}`}
+                          className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PROJEKAT_BOJE[colorIdx] || 'bg-gray-400'}`}
                           title={p.naziv}
                         />
                       )
-                    }
-                    return (
-                      <div
-                        key={p.id}
-                        className={`w-full min-w-full h-1.5 rounded-none flex-shrink-0 ${PROJEKAT_BOJE[colorIdx] || 'bg-gray-400'}`}
-                        title={p.naziv}
-                      />
-                    )
-                  })}
-                </div>
-              </button>
-            )
-          })}
+                    })}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+          {/* Kontinuirane linije – jedan bar po projektu */}
           {projektiTimeline.length > 0 && (
-            <div className="col-span-7 flex flex-wrap gap-x-3 gap-y-1 pt-1">
+            <div className="absolute bottom-0 left-0 right-0 flex flex-col gap-0.5 pointer-events-none">
               {projektiTimeline.map((p) => (
-                <span key={`lg-${p.id}`} className="flex items-center gap-1.5 text-[9px] text-gray-600">
-                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PROJEKAT_BOJE[p.colorIdx]}`} />
-                  <span className="truncate max-w-[100px]" title={p.naziv}>{p.naziv}</span>
-                </span>
+                <div key={p.id} className="relative h-1.5 w-full">
+                  <div
+                    className={`absolute h-full rounded-sm ${PROJEKAT_BOJE[p.colorIdx]}`}
+                    style={{ left: `${p.left}%`, width: `${p.width}%` }}
+                    title={p.naziv}
+                  />
+                </div>
               ))}
             </div>
           )}
         </div>
+        {projektiTimeline.length > 0 && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1 pt-2 mt-1 border-t border-gray-100">
+            {projektiTimeline.map((p) => (
+              <span key={`lg-${p.id}`} className="flex items-center gap-1.5 text-[9px] text-gray-600">
+                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PROJEKAT_BOJE[p.colorIdx]}`} />
+                <span className="truncate max-w-[100px]" title={p.naziv}>{p.naziv}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
