@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS projekti (
   napomena TEXT,
   mobil TEXT,
   rok DATE,
+  datum_pocetka DATE,
   status TEXT NOT NULL DEFAULT 'novo',
   datum_kreiranja TIMESTAMPTZ NOT NULL DEFAULT now(),
   datum_azuriranja TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -23,3 +24,4 @@ CREATE INDEX IF NOT EXISTS idx_projekti_datum ON projekti(datum_kreiranja DESC);
 -- Ako tabela već postoji, dodaj kolone:
 -- ALTER TABLE projekti ADD COLUMN IF NOT EXISTS mobil TEXT;
 -- ALTER TABLE projekti ADD COLUMN IF NOT EXISTS todos JSONB DEFAULT '[]';
+-- ALTER TABLE projekti ADD COLUMN IF NOT EXISTS datum_pocetka DATE;

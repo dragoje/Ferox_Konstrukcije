@@ -31,6 +31,7 @@ export async function PATCH(request, { params }) {
       napomena: data.napomena || '',
       mobil: data.mobil || '',
       rok: data.rok,
+      datumPocetka: data.datum_pocetka,
       status: data.status,
       datumKreiranja: data.datum_kreiranja,
       datumAzuriranja: data.datum_azuriranja,

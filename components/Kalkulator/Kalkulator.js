@@ -25,6 +25,10 @@ export default function Kalkulator() {
   const [showKreirajModal, setShowKreirajModal] = useState(false)
   const [kreirajNaziv, setKreirajNaziv] = useState('')
   const [kreirajRok, setKreirajRok] = useState('')
+  const [kreirajDatumPocetka, setKreirajDatumPocetka] = useState(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
   const [kreirajMobil, setKreirajMobil] = useState('')
   const [kreirajNapomena, setKreirajNapomena] = useState('')
 
@@ -517,6 +521,7 @@ export default function Kalkulator() {
       dimenzije: `${length} x ${width} x ${height}`,
       napomena: kreirajNapomena.trim() || null,
       mobil: kreirajMobil.trim() || null,
+      datumPocetka: kreirajDatumPocetka || null,
       rok: kreirajRok || null,
       status: 'novo',
       datumKreiranja: new Date().toISOString(),
@@ -529,6 +534,10 @@ export default function Kalkulator() {
       setShowKreirajModal(false)
       setKreirajNaziv('')
       setKreirajRok('')
+      setKreirajDatumPocetka((() => {
+        const d = new Date()
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      })())
       setKreirajMobil('')
       setKreirajNapomena('')
       router.push('/admin/projekti')
@@ -1177,6 +1186,15 @@ export default function Kalkulator() {
                 />
               </label>
               <label className="flex flex-col">
+                Datum početka
+                <input
+                  type="date"
+                  value={kreirajDatumPocetka}
+                  onChange={(e) => setKreirajDatumPocetka(e.target.value)}
+                  className="mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </label>
+              <label className="flex flex-col">
                 Mobilni telefon
                 <input
                   type="tel"
@@ -1214,7 +1232,15 @@ export default function Kalkulator() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowKreirajModal(false); setKreirajNaziv(''); setKreirajRok(''); setKreirajMobil(''); setKreirajNapomena('') }}
+                  onClick={() => {
+                  setShowKreirajModal(false)
+                  setKreirajNaziv('')
+                  setKreirajRok('')
+                  const d = new Date()
+                  setKreirajDatumPocetka(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
+                  setKreirajMobil('')
+                  setKreirajNapomena('')
+                }}
                   className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md font-medium hover:bg-gray-300"
                 >
                   Otkaži

@@ -19,8 +19,16 @@ const DANI_NEDELJE = ['P', 'U', 'S', 'Č', 'P', 'S', 'N']
 
 function parseDate(iso) {
   if (!iso) return null
-  const s = String(iso)
-  const d = new Date(s.includes('T') ? s : s + 'T12:00:00')
+  const s = String(iso).trim()
+  const match = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (match) {
+    const y = parseInt(match[1], 10)
+    const m = parseInt(match[2], 10) - 1
+    const d = parseInt(match[3], 10)
+    const date = new Date(y, m, d)
+    return isNaN(date.getTime()) ? null : date
+  }
+  const d = new Date(s)
   return isNaN(d.getTime()) ? null : d
 }
 
@@ -32,9 +40,13 @@ function danURasponu(dan, start, end) {
   return d >= s && d <= e
 }
 
+function getStartDate(p) {
+  return parseDate(p.datumPocetka) || parseDate(p.datumKreiranja)
+}
+
 function projektiZaDan(dan, projekti) {
   return projekti.filter((p) => {
-    const start = parseDate(p.datumKreiranja)
+    const start = getStartDate(p)
     const end = p.rok ? parseDate(p.rok) : start
     if (!start) return false
     const endDate = end || start
@@ -42,27 +54,37 @@ function projektiZaDan(dan, projekti) {
   })
 }
 
-function projektiUMesecu(projekti, year, month) {
+function projektiUMesecu(projekti, year, month, pocetakNedelje) {
   const prvi = new Date(year, month, 1)
   const poslednji = new Date(year, month + 1, 0)
   const brojDana = poslednji.getDate()
 
   return projekti
     .filter((p) => {
-      const start = parseDate(p.datumKreiranja)
+      const start = getStartDate(p)
       const end = p.rok ? parseDate(p.rok) : start
       if (!start) return false
       const e = end || start
       return start <= poslednji && e >= prvi
     })
     .map((p, idx) => {
-      const start = parseDate(p.datumKreiranja)
+      const start = getStartDate(p)
       const end = p.rok ? parseDate(p.rok) : start
       const e = end || start
-      const startDan = start < prvi ? 1 : start.getDate()
-      const endDan = e > poslednji ? brojDana : e.getDate()
-      const left = ((startDan - 1) / brojDana) * 100
-      const width = Math.max(2, ((endDan - startDan + 1) / brojDana) * 100)
+      if (!start || !e) return null
+      const startNorm = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+      const endNorm = new Date(e.getFullYear(), e.getMonth(), e.getDate())
+      const startDan = startNorm < prvi ? 1 : start.getDate()
+      const endDan = endNorm > poslednji ? brojDana : e.getDate()
+      let minCol = 7
+      let maxCol = 0
+      for (let d = startDan; d <= endDan; d++) {
+        const col = (pocetakNedelje + d - 1) % 7
+        minCol = Math.min(minCol, col)
+        maxCol = Math.max(maxCol, col)
+      }
+      const left = (minCol / 7) * 100
+      const width = Math.max(2, ((maxCol - minCol + 1) / 7) * 100)
       return {
         ...p,
         colorIdx: idx % PROJEKAT_BOJE.length,
@@ -72,6 +94,7 @@ function projektiUMesecu(projekti, year, month) {
         endDan,
       }
     })
+    .filter(Boolean)
 }
 
 export default function ProjektiKalendar({ projekti = [], izabraniDatum = null, onDayClick }) {
@@ -107,8 +130,8 @@ export default function ProjektiKalendar({ projekti = [], izabraniDatum = null, 
   for (let i = 1; i <= brojDana; i++) dani.push(new Date(current.year, current.month, i))
 
   const projektiUMesecuSvi = useMemo(
-    () => projektiUMesecu(projekti, current.year, current.month),
-    [projekti, current.year, current.month]
+    () => projektiUMesecu(projekti, current.year, current.month, pocetakNedelje),
+    [projekti, current.year, current.month, pocetakNedelje]
   )
 
   const normalizeStatus = (s) =>

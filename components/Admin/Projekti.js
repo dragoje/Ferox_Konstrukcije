@@ -25,6 +25,10 @@ export default function Projekti() {
   const [izabraniDatum, setIzabraniDatum] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const danasStr = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
   const [forma, setForma] = useState({
     naziv: '',
     duzina: 6,
@@ -32,6 +36,7 @@ export default function Projekti() {
     visina: 2.5,
     napomena: '',
     mobil: '',
+    datumPocetka: '',
     rok: '',
   })
 
@@ -71,6 +76,7 @@ export default function Projekti() {
       dimenzije,
       napomena: forma.napomena.trim() || null,
       mobil: forma.mobil.trim() || null,
+      datumPocetka: forma.datumPocetka || danasStr(),
       rok: forma.rok || null,
       status: 'novo',
       datumKreiranja: new Date().toISOString(),
@@ -80,7 +86,7 @@ export default function Projekti() {
     try {
       const created = await addProjekat(novi)
       setProjekti([created, ...projekti])
-      setForma({ naziv: '', duzina: 6, sirina: 5, visina: 2.5, napomena: '', mobil: '', rok: '' })
+      setForma({ naziv: '', duzina: 6, sirina: 5, visina: 2.5, napomena: '', mobil: '', datumPocetka: '', rok: '' })
       setShowForma(false)
     } catch (err) {
       setError(err?.message || 'Greška pri dodavanju')
@@ -347,6 +353,15 @@ export default function Projekti() {
             </label>
           </div>
           <label className="flex flex-col mb-2">
+            Datum početka
+            <input
+              type="date"
+              value={forma.datumPocetka || danasStr()}
+              onChange={(e) => setForma((f) => ({ ...f, datumPocetka: e.target.value }))}
+              className="mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+            />
+          </label>
+          <label className="flex flex-col mb-2">
             Mobilni telefon
             <input
               type="tel"
@@ -367,7 +382,7 @@ export default function Projekti() {
             />
           </label>
           <label className="flex flex-col mb-4">
-            Rok do kada treba da se završi
+            Rok (datum završetka)
             <input
               type="date"
               value={forma.rok}
