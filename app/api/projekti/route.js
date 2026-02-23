@@ -19,12 +19,14 @@ export async function GET() {
       naziv: row.naziv,
       dimenzije: row.dimenzije,
       napomena: row.napomena || '',
+      mobil: row.mobil || '',
       rok: row.rok,
       status: row.status,
       datumKreiranja: row.datum_kreiranja,
       datumAzuriranja: row.datum_azuriranja,
       detalji: row.detalji,
       slika3D: row.slika_3d,
+      todos: row.todos || [],
     }))
 
     return NextResponse.json(projekti)
@@ -43,12 +45,14 @@ export async function POST(request) {
       naziv: body.naziv || 'Projekat bez naziva',
       dimenzije: body.dimenzije || '',
       napomena: body.napomena || null,
+      mobil: body.mobil || null,
       rok: body.rok || null,
       status: body.status || 'novo',
       datum_kreiranja: body.datumKreiranja || new Date().toISOString(),
       datum_azuriranja: body.datumAzuriranja || new Date().toISOString(),
       detalji: body.detalji || null,
       slika_3d: body.slika3D || null,
+      todos: body.todos || [],
     }
 
     if (body.id) row.id = body.id
@@ -65,12 +69,14 @@ export async function POST(request) {
       naziv: data.naziv,
       dimenzije: data.dimenzije,
       napomena: data.napomena || '',
+      mobil: data.mobil || '',
       rok: data.rok,
       status: data.status,
       datumKreiranja: data.datum_kreiranja,
       datumAzuriranja: data.datum_azuriranja,
       detalji: data.detalji,
       slika3D: data.slika_3d,
+      todos: data.todos || [],
     })
   } catch (err) {
     console.error('API error:', err)

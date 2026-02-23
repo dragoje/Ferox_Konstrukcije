@@ -9,6 +9,7 @@ export async function PATCH(request, { params }) {
 
     const updates = {}
     if (body.status !== undefined) updates.status = body.status
+    if (body.todos !== undefined) updates.todos = body.todos
     updates.datum_azuriranja = body.datumAzuriranja || new Date().toISOString()
 
     const { data, error } = await supabase
@@ -28,12 +29,14 @@ export async function PATCH(request, { params }) {
       naziv: data.naziv,
       dimenzije: data.dimenzije,
       napomena: data.napomena || '',
+      mobil: data.mobil || '',
       rok: data.rok,
       status: data.status,
       datumKreiranja: data.datum_kreiranja,
       datumAzuriranja: data.datum_azuriranja,
       detalji: data.detalji,
       slika3D: data.slika_3d,
+      todos: data.todos || [],
     })
   } catch (err) {
     console.error('API error:', err)

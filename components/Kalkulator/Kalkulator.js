@@ -25,6 +25,8 @@ export default function Kalkulator() {
   const [showKreirajModal, setShowKreirajModal] = useState(false)
   const [kreirajNaziv, setKreirajNaziv] = useState('')
   const [kreirajRok, setKreirajRok] = useState('')
+  const [kreirajMobil, setKreirajMobil] = useState('')
+  const [kreirajNapomena, setKreirajNapomena] = useState('')
 
   useEffect(() => {
     // Proveri URL parametar
@@ -513,6 +515,8 @@ export default function Kalkulator() {
       id: crypto.randomUUID(),
       naziv: kreirajNaziv.trim() || 'Projekat iz kalkulatora',
       dimenzije: `${length} x ${width} x ${height}`,
+      napomena: kreirajNapomena.trim() || null,
+      mobil: kreirajMobil.trim() || null,
       rok: kreirajRok || null,
       status: 'novo',
       datumKreiranja: new Date().toISOString(),
@@ -525,6 +529,8 @@ export default function Kalkulator() {
       setShowKreirajModal(false)
       setKreirajNaziv('')
       setKreirajRok('')
+      setKreirajMobil('')
+      setKreirajNapomena('')
       router.push('/admin/projekti')
     } catch (err) {
       console.error('Greška pri kreiranju projekta:', err)
@@ -1171,6 +1177,26 @@ export default function Kalkulator() {
                 />
               </label>
               <label className="flex flex-col">
+                Mobilni telefon
+                <input
+                  type="tel"
+                  value={kreirajMobil}
+                  onChange={(e) => setKreirajMobil(e.target.value)}
+                  placeholder="npr. 063 123 4567"
+                  className="mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </label>
+              <label className="flex flex-col">
+                Napomena
+                <input
+                  type="text"
+                  value={kreirajNapomena}
+                  onChange={(e) => setKreirajNapomena(e.target.value)}
+                  placeholder="Opciono"
+                  className="mt-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+              </label>
+              <label className="flex flex-col">
                 Rok do kada treba da se završi
                 <input
                   type="date"
@@ -1188,7 +1214,7 @@ export default function Kalkulator() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setShowKreirajModal(false); setKreirajNaziv(''); setKreirajRok('') }}
+                  onClick={() => { setShowKreirajModal(false); setKreirajNaziv(''); setKreirajRok(''); setKreirajMobil(''); setKreirajNapomena('') }}
                   className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md font-medium hover:bg-gray-300"
                 >
                   Otkaži
