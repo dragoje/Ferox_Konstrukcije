@@ -158,6 +158,25 @@ export default function Projekti() {
     azurirajTodos(detaljiProjekat.id, newTodos)
   }
 
+  const toggleTodoBold = (todoId) => {
+    if (!detaljiProjekat) return
+    const newTodos = (detaljiProjekat.todos || []).map((t) =>
+      t.id === todoId ? { ...t, bold: !t.bold } : t
+    )
+    azurirajTodos(detaljiProjekat.id, newTodos)
+  }
+
+  const moveTodo = (todoId, direction) => {
+    if (!detaljiProjekat?.todos?.length) return
+    const arr = [...(detaljiProjekat.todos || [])]
+    const idx = arr.findIndex((t) => t.id === todoId)
+    if (idx < 0) return
+    const newIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (newIdx < 0 || newIdx >= arr.length) return
+    ;[arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]]
+    azurirajTodos(detaljiProjekat.id, arr)
+  }
+
   const potvrdiBrisanje = async (id) => {
     const prethodno = projekti
     setProjekti(projekti.filter((p) => p.id !== id))
@@ -459,7 +478,7 @@ export default function Projekti() {
                           key={t.id}
                           className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity ${
                             t.completed ? 'bg-green-50 text-green-700 line-through' : 'bg-gray-100 text-gray-700'
-                          }`}
+                          } ${t.bold ? 'font-bold' : ''}`}
                         >
                           <input
                             type="checkbox"
@@ -568,7 +587,7 @@ export default function Projekti() {
                   </button>
                 </div>
                 <ul className="space-y-2">
-                  {(detaljiProjekat.todos || []).map((t) => (
+                  {(detaljiProjekat.todos || []).map((t, idx) => (
                     <li key={t.id} className="flex items-center gap-2 group">
                       <input
                         type="checkbox"
@@ -576,19 +595,53 @@ export default function Projekti() {
                         onChange={() => toggleTodo(t.id)}
                         className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                       />
-                      <span className={`flex-1 text-sm ${t.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                      <span className={`flex-1 text-sm ${t.completed ? 'line-through text-gray-500' : 'text-gray-800'} ${t.bold ? 'font-bold' : ''}`}>
                         {t.text}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => obrisiTodo(t.id)}
-                        className="p-1 text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Obriši"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleTodoBold(t.id)}
+                          className={`p-1 rounded ${t.bold ? 'bg-gray-200 text-gray-800' : 'text-gray-500 hover:bg-gray-100'}`}
+                          title={t.bold ? 'Ukloni bold' : 'Bold'}
+                        >
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M15.6 10.79c.97-.67 1.65-1.77 1.65-2.79 0-2.26-1.75-4-4-4H7v14h7.04c2.09 0 3.71-1.7 3.71-3.79 0-1.52-.86-2.82-2.15-3.42zM10 6.5h3c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-3v-3zm3.5 9H10v-3h3.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveTodo(t.id, 'up')}
+                          disabled={idx === 0}
+                          className="p-1 text-gray-500 hover:bg-gray-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Pomeri gore"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveTodo(t.id, 'down')}
+                          disabled={idx === (detaljiProjekat.todos?.length || 0) - 1}
+                          className="p-1 text-gray-500 hover:bg-gray-100 rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Pomeri dole"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => obrisiTodo(t.id)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                          title="Obriši"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
