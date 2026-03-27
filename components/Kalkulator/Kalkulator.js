@@ -51,7 +51,7 @@ export default function Kalkulator() {
   const [length, setLength] = useState(6)
   const [height, setHeight] = useState(2.5)
   const [padKrova, setPadKrova] = useState(1)
-  const [pricePerKg, setPricePerKg] = useState(1.5)
+  const [pricePerKg, setPricePerKg] = useState(1.6)
   const [cenaMaterijalaPoKg, setCenaMaterijalaPoKg] = useState(0.85)
   const [projectName, setProjectName] = useState('')
   const [povrsinaHale, setPovrsinaHale] = useState(0)
