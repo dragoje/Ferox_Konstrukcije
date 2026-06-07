@@ -23,6 +23,10 @@ const VALID_HEIGHTS = Array.from({ length: 8 }, (_, i) => 2.5 + i * 0.5)
 
 const formatDimenzije = (l, w, h) => `${l}x${w}x${h}`
 
+const scrollToSection = (sectionId) => {
+  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 const parseDimenzije = (input) => {
   const trimmed = input.trim()
   if (!trimmed) return { error: 'Unesite dimenzije' }
@@ -665,7 +669,7 @@ export default function Kalkulator() {
           </label>
         </div>
         {isAdmin && (
-          <div className="mt-3 flex justify-center">
+          <div className="mt-3 flex flex-col items-center gap-2">
             <button
               type="button"
               onClick={copyPonudaToClipboard}
@@ -676,6 +680,22 @@ export default function Kalkulator() {
               </svg>
               {copiedNotification ? 'Kopirano!' : 'Kopiraj ponudu'}
             </button>
+            <div className="flex w-full max-w-md gap-2">
+              <button
+                type="button"
+                onClick={() => scrollToSection('sekcija-ponuda')}
+                className="flex-1 px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Idi na ponudu
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('sekcija-3d')}
+                className="flex-1 px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Idi na 3D prikaz
+              </button>
+            </div>
           </div>
         )}
       </section>
@@ -937,7 +957,7 @@ export default function Kalkulator() {
 
       {/* Ponuda */}
       {isAdmin && (
-      <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+      <section id="sekcija-ponuda" className="mb-4 p-4 rounded-lg shadow-md scroll-mt-4" style={{ backgroundColor: '#F0F0F0' }}>
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
           <h2 className="text-lg font-semibold">Ponuda</h2>
           {isAdmin && <button
@@ -1117,7 +1137,7 @@ export default function Kalkulator() {
       </section>
 
       {/* 3D Vizualizacija */}
-      <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+      <section id="sekcija-3d" className="mb-4 p-4 rounded-lg shadow-md scroll-mt-4" style={{ backgroundColor: '#F0F0F0' }}>
         <h2 className="text-lg font-semibold mb-2">3D Vizualizacija hale</h2>
         <p className="text-sm text-gray-600 mb-2">
           Interaktivna 3D vizualizacija vaše hale sa svim elementima: stubovima, binderima i rožnjačama.

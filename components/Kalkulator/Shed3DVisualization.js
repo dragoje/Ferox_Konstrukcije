@@ -567,6 +567,7 @@ function VisualizationLegend({
   return (
     <div
       data-legend
+      data-capture-ignore
       className="absolute top-3 left-3 z-20 bg-white px-2.5 py-1.5 rounded-lg shadow-md border border-slate-200"
     >
       <table cellPadding={0} cellSpacing={0} style={{ borderCollapse: 'collapse' }}>
@@ -630,13 +631,6 @@ export default function Shed3DVisualization({
       useCORS: true,
       logging: false,
       ignoreElements: (el) => el.hasAttribute('data-capture-ignore'),
-      onclone: (_doc, clonedElement) => {
-        clonedElement.querySelectorAll('[data-legend]').forEach((node) => {
-          node.style.backdropFilter = 'none'
-          node.style.webkitBackdropFilter = 'none'
-          node.style.backgroundColor = '#ffffff'
-        })
-      },
     })
 
     return canvas.toDataURL('image/png')
