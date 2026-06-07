@@ -47,7 +47,7 @@ export default function HalaDetailPage({ params }) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-24">
       <div className="container mx-auto px-4 py-8 lg:py-10">
         {/* Breadcrumb */}
         <nav className="mb-8 text-sm">

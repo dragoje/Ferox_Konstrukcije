@@ -1,8 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+
+const DEFAULT_BENEFITS = [
+  { icon: 'shield', title: 'Garancija kvaliteta', description: 'Provereni materijali i precizna izrada' },
+  { icon: 'steel', title: 'Čelični profili', description: 'Visokootporne dimenzije po standardu' },
+  { icon: 'custom', title: 'Prilagođavanje', description: 'Moguća izrada po vašim dimenzijama' },
+  { icon: 'paint', title: 'Antikorozivna zaštita', description: 'Zaštita u dva sloja uključena u cenu' },
+  { icon: 'quality', title: 'Premium zavarivanje', description: 'Stubovi sa anker pločama i rožnjače' },
+  { icon: 'build', title: 'Brza montaža', description: 'Montažni komplet sa uputstvom za sklapanje' },
+]
 
 const DEFAULT_IMPORTANT_INFO = [
   {
@@ -59,14 +68,77 @@ function InfoIcon({ type }) {
   }
 }
 
+function BenefitIcon({ type }) {
+  const cls = 'w-6 h-6 text-white'
+  switch (type) {
+    case 'shield':
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+      )
+    case 'steel':
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        </svg>
+      )
+    case 'custom':
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
+        </svg>
+      )
+    case 'paint':
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+        </svg>
+      )
+    case 'quality':
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+      )
+    case 'build':
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03a2.652 2.652 0 013.582-.582l1.06 1.06a2.652 2.652 0 01-.582 3.582l-3.03 2.496M11.42 15.17L4.5 8.25" />
+        </svg>
+      )
+    default:
+      return (
+        <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+        </svg>
+      )
+  }
+}
+
 export default function ProductDetailHero({ hala }) {
   const images = hala.images || []
   const plans = hala.plans?.length ? hala.plans : images
   const importantInfo = hala.importantInfo || DEFAULT_IMPORTANT_INFO
+  const benefits = hala.benefits || DEFAULT_BENEFITS
 
+  const priceSectionRef = useRef(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [planIndex, setPlanIndex] = useState(0)
   const [lightboxImage, setLightboxImage] = useState(null)
+  const [showStickyBar, setShowStickyBar] = useState(false)
+
+  useEffect(() => {
+    const el = priceSectionRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '-64px 0px 0px 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   const formatPrice = (price) =>
     typeof price === 'number' ? `${price.toLocaleString('sr-RS')} €` : price
@@ -155,7 +227,7 @@ export default function ProductDetailHero({ hala }) {
           )}
 
           {hala.price && (
-            <div className="mb-6">
+            <div ref={priceSectionRef} className="mb-6">
               {hala.originalPrice && (
                 <p className="text-sm text-gray-400 line-through mb-0.5">
                   {formatPrice(hala.originalPrice)}
@@ -265,6 +337,89 @@ export default function ProductDetailHero({ hala }) {
               {hala.priceNote}
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Korak 6: Prednosti proizvoda */}
+      <div className="mb-12">
+        <h2 className="text-xl font-bold text-gray-900 mb-6 text-center lg:text-left">
+          Istaknute prednosti
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 border border-gray-200 rounded-xl p-5 lg:p-8 bg-gray-50/50">
+          {benefits.map((benefit, i) => (
+            <div key={i} className="flex items-start gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-red-700 shrink-0">
+                <BenefitIcon type={benefit.icon} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-1">{benefit.title}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">{benefit.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Sticky traka sa cenom pri scrollu */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] transition-transform duration-300 ${
+          showStickyBar ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        aria-hidden={!showStickyBar}
+      >
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="min-w-0 flex-1 hidden md:block">
+              <p className="font-semibold text-gray-900 truncate text-sm">{hala.title}</p>
+              {hala.sku && (
+                <p className="text-xs text-gray-500">Šifra: {hala.sku}</p>
+              )}
+            </div>
+
+            {hala.specs && (
+              <div className="hidden lg:flex items-center gap-5 shrink-0">
+                {hala.specs.map((spec, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-sm text-gray-700">
+                    <span>{spec.icon}</span>
+                    <span className="font-medium whitespace-nowrap">{spec.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 shrink-0 ml-auto w-full sm:w-auto">
+              {hala.price && (
+                <div className="text-right">
+                  {hala.originalPrice && (
+                    <p className="text-xs text-gray-400 line-through hidden sm:block">
+                      {formatPrice(hala.originalPrice)}
+                    </p>
+                  )}
+                  <p className="text-xl sm:text-2xl font-bold text-red-700 whitespace-nowrap">
+                    {formatPrice(hala.price)}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 shrink-0">
+                <Link
+                  href="/kontakt"
+                  className="hidden sm:flex items-center justify-center gap-1.5 px-4 py-2 border border-gray-300 rounded-md text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Kontakt
+                </Link>
+                <Link
+                  href="/kontakt"
+                  className="px-4 sm:px-6 py-2 bg-gray-900 text-white rounded-md text-sm font-semibold hover:bg-gray-800 transition-colors whitespace-nowrap"
+                >
+                  Traži ponudu
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
