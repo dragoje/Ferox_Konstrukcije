@@ -531,6 +531,68 @@ function CaptureRegistrar({ onCaptureReady }) {
   return null
 }
 
+/** Legenda — table layout radi pouzdanog html2canvas snimka (flex/gap/backdrop-blur kvare poravnanje) */
+function VisualizationLegend({
+  brojStubova,
+  brojBindera,
+  brojRoznjacaPoBinderu,
+  ukupanBrojRoznjaca,
+}) {
+  const swatchStyle = {
+    display: 'inline-block',
+    width: 10,
+    height: 10,
+    borderRadius: 2,
+    marginRight: 4,
+    verticalAlign: 'middle',
+  }
+
+  const cellStyle = {
+    paddingRight: 10,
+    verticalAlign: 'middle',
+    whiteSpace: 'nowrap',
+    fontSize: 11,
+    lineHeight: '16px',
+    color: '#334155',
+  }
+
+  const dotCellStyle = {
+    paddingRight: 6,
+    verticalAlign: 'middle',
+    color: '#cbd5e1',
+    fontSize: 11,
+    lineHeight: '16px',
+  }
+
+  return (
+    <div
+      data-legend
+      className="absolute top-3 left-3 z-20 bg-white px-2.5 py-1.5 rounded-lg shadow-md border border-slate-200"
+    >
+      <table cellPadding={0} cellSpacing={0} style={{ borderCollapse: 'collapse' }}>
+        <tbody>
+          <tr>
+            <td style={cellStyle}>
+              <span style={{ ...swatchStyle, backgroundColor: VIS_COLORS.post }} />
+              Stubovi {brojStubova}
+            </td>
+            <td className="hidden sm:table-cell" style={dotCellStyle}>·</td>
+            <td style={cellStyle}>
+              <span style={{ ...swatchStyle, backgroundColor: VIS_COLORS.binderMain }} />
+              Binderi {brojBindera}
+            </td>
+            <td className="hidden sm:table-cell" style={dotCellStyle}>·</td>
+            <td style={{ ...cellStyle, paddingRight: 0 }}>
+              <span style={{ ...swatchStyle, backgroundColor: VIS_COLORS.purlin }} />
+              Rožnjače {brojRoznjacaPoBinderu}/b · {ukupanBrojRoznjaca} m
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 // Main visualization component
 export default function Shed3DVisualization({
   length,
@@ -568,6 +630,13 @@ export default function Shed3DVisualization({
       useCORS: true,
       logging: false,
       ignoreElements: (el) => el.hasAttribute('data-capture-ignore'),
+      onclone: (_doc, clonedElement) => {
+        clonedElement.querySelectorAll('[data-legend]').forEach((node) => {
+          node.style.backdropFilter = 'none'
+          node.style.webkitBackdropFilter = 'none'
+          node.style.backgroundColor = '#ffffff'
+        })
+      },
     })
 
     return canvas.toDataURL('image/png')
@@ -675,27 +744,12 @@ export default function Shed3DVisualization({
       </Canvas>
 
       {/* Legenda */}
-      <div className="absolute top-3 left-3 z-20 pointer-events-none">
-        <div className="pointer-events-auto inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 bg-white/92 backdrop-blur-sm px-2.5 py-1.5 rounded-lg shadow-md border border-slate-200 text-[11px] sm:text-xs text-slate-700">
-          <span className="inline-flex items-center gap-1 shrink-0 leading-none">
-            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.post }} />
-            <span>Stubovi <span className="tabular-nums">{brojStubova}</span></span>
-          </span>
-          <span className="text-slate-300 hidden sm:inline leading-none">·</span>
-          <span className="inline-flex items-center gap-1 shrink-0 leading-none">
-            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.binderMain }} />
-            <span>Binderi <span className="tabular-nums">{brojBindera}</span></span>
-          </span>
-          <span className="text-slate-300 hidden sm:inline leading-none">·</span>
-          <span className="inline-flex items-center gap-1 shrink-0 leading-none">
-            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.purlin }} />
-            <span>
-              Rožnjače <span className="tabular-nums">{brojRoznjacaPoBinderu}</span>/b ·{' '}
-              <span className="tabular-nums">{ukupanBrojRoznjaca}</span> m
-            </span>
-          </span>
-        </div>
-      </div>
+      <VisualizationLegend
+        brojStubova={brojStubova}
+        brojBindera={brojBindera}
+        brojRoznjacaPoBinderu={brojRoznjacaPoBinderu}
+        ukupanBrojRoznjaca={ukupanBrojRoznjaca}
+      />
 
       {/* Dimenzije hale */}
       <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-3 rounded-lg shadow-md text-xs sm:text-sm border border-slate-200">
