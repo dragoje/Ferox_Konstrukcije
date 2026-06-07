@@ -6,7 +6,13 @@ export const tipoviHala = [
     id: 1,
     slug: 'tip-hale-1',
     title: 'Konstrukcija 16x8x4m',
-    price: '3200 €', // Može biti broj ili string kao 'Po dogovoru'
+    sku: 'FK-16x8x4',
+    price: '3200 €',
+    priceNote: 'Napomena: prevoz i montaža nisu uključeni u cenu. Montažu ne radimo, ali po potrebi možemo organizovati prevoz.',
+    specs: [
+      { icon: '📐', value: '16 × 8 × 4 m' },
+      { icon: '⚖️', value: '~2100 kg' },
+    ],
     shortDescription: '',
     description: `Montazna konstrukcija za halu dimenzija 16x8m.
 
@@ -35,7 +41,13 @@ U cenu su uračunati stubovi sa zavarenim anker plocama, binderi i rožnjače. B
     id: 2,
     slug: 'tip-hale-2',
     title: 'Konstrukcija 15x10x4.5m',
-    price: '4400 €', // Može biti broj ili string kao 'Po dogovoru'
+    sku: 'FK-15x10x4.5',
+    price: '4400 €',
+    priceNote: 'Napomena: prevoz i montaža nisu uključeni u cenu. Montažu ne radimo, ali po potrebi možemo organizovati prevoz.',
+    specs: [
+      { icon: '📐', value: '15 × 10 × 4.5 m' },
+      { icon: '⚖️', value: '~2800 kg' },
+    ],
     shortDescription: '',
     description:`Montazna konstrukcija za halu dimenzija 15x10m.
 
@@ -62,7 +74,13 @@ U cenu su uračunati stubovi sa zavarenim anker plocama, binderi i rožnjače. B
     id: 3,
     slug: 'tip-hale-3',
     title: 'Konstrukcija 12x6x3m',
-    price: '1700 €', // Može biti broj ili string kao 'Po dogovoru'
+    sku: 'FK-12x6x3',
+    price: '1700 €',
+    priceNote: 'Napomena: prevoz i montaža nisu uključeni u cenu. Montažu ne radimo, ali po potrebi možemo organizovati prevoz.',
+    specs: [
+      { icon: '📐', value: '12 × 6 × 3 m' },
+      { icon: '⚖️', value: '~1100 kg' },
+    ],
     description: `Montazna konstrukcija za halu dimenzija 15x10m.
 
 Uz konstrukciju se dobija crtež sa dimenzijama i rasporedom stubova. Moguća izrada i odgovarajućih ankrer ploča sa šrafovoma za betoniranje.
@@ -88,8 +106,13 @@ U cenu su uračunati stubovi sa zavarenim anker plocama, binderi i rožnjače. B
     id: 4,
     slug: 'tip-hale-4',
     title: 'Konstrukcija 24x12x4.5m',
-    price: '7800 €', // Može biti broj ili string kao 'Po dogovoru'
-    
+    sku: 'FK-24x12x4.5',
+    price: '7800 €',
+    priceNote: 'Napomena: prevoz i montaža nisu uključeni u cenu. Montažu ne radimo, ali po potrebi možemo organizovati prevoz.',
+    specs: [
+      { icon: '📐', value: '24 × 12 × 4.5 m' },
+      { icon: '⚖️', value: '~4850 kg' },
+    ],
     description: `Montazna konstrukcija za halu dimenzija 15x10m.
 
 Uz konstrukciju se dobija crtež sa dimenzijama i rasporedom stubova. Moguća izrada i odgovarajućih ankrer ploča sa šrafovoma za betoniranje.

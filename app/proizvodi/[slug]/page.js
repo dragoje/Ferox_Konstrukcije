@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { getHalaBySlug, getAllHalaSlugs } from '@/data/tipoviHala'
+import { getHalaBySlug } from '@/data/tipoviHala'
+import ProductDetailHero from '@/components/Proizvodi/ProductDetailHero'
 
 export default function HalaDetailPage({ params }) {
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [slug, setSlug] = useState(null)
 
   useEffect(() => {
-    // Handle both sync and async params (Next.js 14)
     async function getSlug() {
       if (params?.slug) {
         setSlug(params.slug)
@@ -22,10 +20,8 @@ export default function HalaDetailPage({ params }) {
     getSlug()
   }, [params])
 
-  // Get hala data
   const hala = slug ? getHalaBySlug(slug) : null
 
-  // Loading state
   if (!slug) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -37,7 +33,6 @@ export default function HalaDetailPage({ params }) {
     )
   }
 
-  // Not found state
   if (!hala) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -52,11 +47,11 @@ export default function HalaDetailPage({ params }) {
   }
 
   return (
-    <div className="min-h-screen py-12">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-4 py-8 lg:py-10">
         {/* Breadcrumb */}
-        <nav className="mb-6 text-sm">
-          <ol className="flex items-center space-x-2 text-gray-600">
+        <nav className="mb-8 text-sm">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-gray-500">
             <li><Link href="/" className="hover:text-red-700 transition-colors">Početna</Link></li>
             <li>/</li>
             <li><Link href="/proizvodi" className="hover:text-red-700 transition-colors">Proizvodi</Link></li>
@@ -65,139 +60,30 @@ export default function HalaDetailPage({ params }) {
           </ol>
         </nav>
 
-        {/* Main Content - 50/50 Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Leva strana - Slike */}
-          <div className="space-y-4">
-            <h1 className="text-3xl font-bold mb-4 lg:hidden">{hala.title}</h1>
+        <ProductDetailHero hala={hala} />
 
-            {/* Glavna slika */}
-            <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden relative">
-              {hala.images && hala.images[selectedImageIndex] ? (
-                <Image
-                  src={hala.images[selectedImageIndex]}
-                  alt={`${hala.title} - Slika ${selectedImageIndex + 1}`}
-                  fill
-                  className="object-cover"
-                  quality={100}
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  priority={selectedImageIndex === 0}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <div className="text-center">
-                    <div className="text-6xl mb-2">{hala.icon}</div>
-                    <p>Nema dostupnih slika</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnail galerija */}
-            {hala.images && hala.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {hala.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`aspect-video bg-gray-200 rounded-lg overflow-hidden relative border-2 transition-all ${
-                      selectedImageIndex === index
-                        ? 'border-red-700 ring-2 ring-red-200'
-                        : 'border-transparent hover:border-gray-400'
-                    }`}
-                  >
-                    <Image
-                      src={image}
-                      alt={`${hala.title} thumbnail ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      quality={90}
-                      sizes="(max-width: 768px) 25vw, 12.5vw"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
+        {/* Opis i karakteristike */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Opis proizvoda</h2>
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+              {hala.description}
+            </p>
           </div>
 
-          {/* Desna strana - Opis */}
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 hidden lg:block">{hala.title}</h1>
-              <p className="text-xl text-gray-600 mb-4">{hala.shortDescription}</p>
-            </div>
-
-            {/* Cena i napomena */}
-            {hala.price && (
-              <div className="mb-4">
-                <p className="mb-2">
-                  <span className="text-lg text-gray-700">Cena: </span>
-                  <span className="text-3xl font-bold text-red-700">
-                    {typeof hala.price === 'number' ? `${hala.price.toLocaleString()} €` : hala.price}
-                  </span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Napomena:</strong> Prevoz i montaza nisu ukljuceni u cenu. <strong>Montažu ne radimo</strong>, ali po potrebi možemo organizovati prevoz.
-                </p>
-              </div>
-            )}
-
-            {/* Glavni opis */}
-            <div className="prose max-w-none">
-              <h2 className="text-2xl font-semibold mb-3">Opis</h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {hala.description}
-              </p>
-            </div>
-
-            {/* Karakteristike */}
-            <div>
-              <h2 className="text-2xl font-semibold mb-3">Karakteristike</h2>
-              <ul className="space-y-2">
-                {hala.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start">
-                    <span className="text-red-700 mr-3 mt-1">✓</span>
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link
-                href="/kontakt"
-                className="bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors text-center"
-              >
-                Traži Ponudu
-              </Link>
-            </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Karakteristike</h2>
+            <ul className="space-y-3">
+              {hala.features.map((feature, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <span className="flex items-center justify-center w-6 h-6 rounded bg-red-700 text-white text-xs shrink-0 mt-0.5">✓</span>
+                  <span className="text-gray-700">{feature.trim()}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-
-        {/* Navigacija do drugih tipova
-        <div className="mt-12 border-t pt-8">
-          <h2 className="text-2xl font-bold mb-6 text-center">Ostali Tipovi Hala</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {getAllHalaSlugs()
-              .filter(slug => slug !== hala.slug)
-              .map(slug => {
-                const otherHala = getHalaBySlug(slug)
-                return (
-                  <Link
-                    key={slug}
-                    href={`/proizvodi/${slug}`}
-                    className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-all text-center"
-                  >
-                    <div className="text-3xl mb-2">{otherHala.icon}</div>
-                    <p className="font-semibold text-sm">{otherHala.title}</p>
-                  </Link>
-                )
-              })}
-          </div>
-        </div> */}
       </div>
     </div>
   )
 }
-
