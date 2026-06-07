@@ -58,7 +58,7 @@ export default function Proizvodi() {
         <div className="text-center bg-gray-100 rounded-lg p-8">
           <h2 className="text-2xl font-bold mb-4 text-gray-900">Interesuje vas nešto?</h2>
           <p className="text-gray-600 mb-6">
-            Kontaktirajte nas ili koristite naš kalkulator za brzu procenu cene
+            Kontaktirajte nas za besplatnu ponudu i procenu cene
           </p>
           <div className="flex gap-4 justify-center">
             <Link
@@ -66,12 +66,6 @@ export default function Proizvodi() {
               className="bg-gray-900 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
             >
               Kontaktirajte Nas
-            </Link>
-            <Link
-              href="/kalkulator"
-              className="bg-gray-200 text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors border border-gray-300"
-            >
-              Kalkulator Cena
             </Link>
           </div>
         </div>

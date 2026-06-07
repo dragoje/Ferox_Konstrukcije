@@ -33,11 +33,6 @@ export default function Footer() {
                   Kontakt
                 </Link>
               </li>
-              <li>
-                <Link href="/kalkulator" className="hover:text-white transition-colors">
-                  Kalkulator
-                </Link>
-              </li>
             </ul>
           </div>
 

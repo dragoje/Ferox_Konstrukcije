@@ -27,10 +27,10 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center">
             <Link
-              href="/kalkulator"
+              href="/kontakt"
               className="bg-red-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-red-800 transition-colors"
             >
-              Kalkulator Cena
+              Traži Ponudu
             </Link>
             <Link
               href="/proizvodi"
@@ -65,7 +65,7 @@ export default function Home() {
               <div className="text-4xl mb-4">💰</div>
               <h3 className="text-xl font-semibold mb-2">Najbolje Cene</h3>
               <p className="text-gray-600">
-                Konkurentne cene uz mogućnost kalkulacije direktno sa sajta
+                Konkurentne cene uz besplatnu ponudu na zahtev
               </p>
             </div>
           </div>

@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import jsPDF from 'jspdf'
 import Shed3DVisualization from './Shed3DVisualization'
-import { STUBOVI_PO_DUZINI, BINDERI_PO_SIRINI, ROZNJACE, ANKER_PLOCA_CENA, ANKER_SRAFO_CENA } from '@/data/konstrukcijaData'
+import { STUBOVI_PO_DUZINI, BINDERI_PO_SIRINI, ROZNJACE, ANKER_PLOCA_CENA, ANKER_SRAFO_CENA, formatAnkerSrafOpis } from '@/data/konstrukcijaData'
 import { addProjekat } from '@/lib/projektiStorage'
 
 // Helper function to format numbers with comma as thousand separator
@@ -12,15 +12,18 @@ const formatPrice = (value) => {
   return value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
-// Helper function to round up to nearest 50
+// Uvek zaokružuje na višu pedeseticu (npr. 5.201 → 5.250, 5.250 → 5.250)
 const roundUpTo50 = (value) => {
-  return Math.ceil(value / 50) * 50
+  const amount = Math.round((Number(value) || 0) * 100) / 100
+  if (amount <= 0) return 0
+  return Math.ceil(amount / 50) * 50
 }
 
 export default function Kalkulator() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
   const capture3DRef = useRef(null)
   const [showKreirajModal, setShowKreirajModal] = useState(false)
   const [kreirajNaziv, setKreirajNaziv] = useState('')
@@ -33,18 +36,22 @@ export default function Kalkulator() {
   const [kreirajNapomena, setKreirajNapomena] = useState('')
 
   useEffect(() => {
-    // Proveri URL parametar
     const adminParam = searchParams.get('admin')
     if (adminParam === 'dzoni') {
       setIsAdmin(true)
-      // Sačuvaj u localStorage
       localStorage.setItem('kalkulator_admin', 'true')
     } else {
-      // Proveri localStorage
       const savedAdmin = localStorage.getItem('kalkulator_admin')
       setIsAdmin(savedAdmin === 'true')
     }
+    setIsLoaded(true)
   }, [searchParams])
+
+  useEffect(() => {
+    if (isLoaded && !isAdmin) {
+      router.push('/')
+    }
+  }, [isAdmin, isLoaded, router])
 
   // --- Šupa parametri ---
   const [width, setWidth] = useState(5)
@@ -63,7 +70,7 @@ export default function Kalkulator() {
   // --- Stubovi ---
   const [selectedStubIndex, setSelectedStubIndex] = useState(0)
   const [includeAnkerPloca, setIncludeAnkerPloca] = useState(false)
-  const [includeAnkerSraf, setIncludeAnkerSraf] = useState(false)
+  const [includeAnkerSraf, setIncludeAnkerSraf] = useState(true)
 
   // Funkcija koja određuje dužinu stuba na osnovu visine hale
   const getStubLengthFromShedHeight = (shedHeight) => {
@@ -257,9 +264,8 @@ export default function Kalkulator() {
 
     const ukupnaTezina = ukupnaTezinaStubova + ukupnaTezinaBindera + ukupnaTezinaRoznjaca
     const ukupnaCenaBezAnkerPloca = ukupnaCenaStubova + ukupnaCenaBindera + ukupnaCenaRoznjaca - ukupnaCenaAnkerPloca - ukupnaCenaAnkerSraf
-    // Zaokruži cenu konstrukcije (bez anker ploča/šrafova) na 50, a anker ploče/šrafove dodaj bez zaokruživanja
-    const zaokruzenaCenaBezAnker = roundUpTo50(ukupnaCenaBezAnkerPloca)
-    const ukupnaCena = zaokruzenaCenaBezAnker + ukupnaCenaAnkerPloca + ukupnaCenaAnkerSraf
+    const ukupnaCenaPreZaokruzivanja = ukupnaCenaStubova + ukupnaCenaBindera + ukupnaCenaRoznjaca
+    const ukupnaCena = roundUpTo50(ukupnaCenaPreZaokruzivanja)
 
     const povrsinaHale = length * width
     const cenaPoMetru = ukupnaCena / povrsinaHale
@@ -363,7 +369,7 @@ export default function Kalkulator() {
         const ankerSrafDataForPDF = ANKER_SRAFO_CENA.find(item => item.tip === selectedStub.tip)
         if (ankerSrafDataForPDF) {
           doc.text(`Anker šrafovi (${selectedStub.tip}): ${calculations.ankerSrafCena}€ po komadu`, 20, currentYPos)
-          doc.text(`Opis: M${ankerSrafDataForPDF.debljina.replace('mm', '')} x ${ankerSrafDataForPDF.duzina}`, 20, currentYPos + 5)
+          doc.text(`Opis: ${formatAnkerSrafOpis(ankerSrafDataForPDF)}`, 20, currentYPos + 5)
           doc.text(`Ukupna cena anker šrafova: ${calculations.ukupnaCenaAnkerSraf.toFixed(2)}€`, 20, currentYPos + 10)
           currentYPos += 15
         }
@@ -451,9 +457,14 @@ export default function Kalkulator() {
 
     ponudaText += 'Stubovi i binderi se spajaju šrafovima, dok se rožnjače vare za L-profile koji su postavljeni na bindere.\n\n'
 
+    if (includeAnkerSraf) {
+      ponudaText += `Uz konstrukciju dolaze šrafovi za bindere i anker šrafovi za beton (${formatAnkerSrafOpis(calculations.ankerSrafData)}). Takođe dolazi tehnički crtež sa dimenzijama i rasporedom montaže stubova.\n\n`
+    }
+
     ponudaText += 'Kompletna konstrukcija je zaštićena i ofarbana u dve ruke osnovnom antikorozivnom farbom.\n\n'
 
-    ponudaText += 'Prevoz i montaža nisu uključeni u cenu.\nMontažu ne radimo, ali po potrebi možemo organizovati prevoz.'
+    ponudaText += 'Prevoz i montaža nisu uključeni u cenu.\nMontažu ne radimo, ali po potrebi možemo organizovati prevoz.\n\n'
+    ponudaText += 'Naša proizvodnja je u Čačku\n\nhttps://maps.app.goo.gl/4Gc6WEnsANG1E5Ya7'
 
     return ponudaText
   }
@@ -547,21 +558,22 @@ export default function Kalkulator() {
     }
   }
 
+  if (!isLoaded || !isAdmin) {
+    return null
+  }
+
   return (
     <div className="p-8 max-w-6xl mx-auto bg-gray-50 min-h-screen font-sans text-gray-800">
       <h1 className="text-4xl font-bold mb-8 text-center text-gray-900">Kalkulator</h1>
 
       {/* Hale parametri */}
-      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
-        <h2 className="text-2xl font-semibold mb-4">Parametri hale</h2>
-        <p className="text-gray-600 mb-6 leading-relaxed">
-          Na kalkulatoru možete odabrati osnovne dimenzije hale (dužina, širina, visina), tip pad krova, kao i specifične elemente konstrukcije (stubovi, binderi, rožnjače).
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          <label className="flex flex-col">
+      <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+        <h2 className="text-lg font-semibold mb-2">Parametri hale</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <label className="flex flex-col text-sm">
             Dužina (m)
             <select
-              className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
               value={length}
               onChange={e => {
                 const newLength = parseFloat(e.target.value) || 1
@@ -570,15 +582,15 @@ export default function Kalkulator() {
                 setBrojBindera(null)
               }}
             >
-              {Array.from({ length: 50 }, (_, i) => i + 1).map(val => (
+              {Array.from({ length: 100 }, (_, i) => i + 1).map(val => (
                 <option key={val} value={val}>{val}m</option>
               ))}
             </select>
           </label>
-          <label className="flex flex-col">
+          <label className="flex flex-col text-sm">
             Širina (m)
             <select
-              className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
               value={width}
               onChange={e => {
                 const newWidth = parseFloat(e.target.value) || 5
@@ -591,10 +603,10 @@ export default function Kalkulator() {
             </select>
           </label>
 
-          <label className="flex flex-col">
+          <label className="flex flex-col text-sm">
             Visina (m)
             <select
-              className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
               value={height}
               onChange={e => {
                 const newHeight = parseFloat(e.target.value) || 2.5
@@ -607,43 +619,45 @@ export default function Kalkulator() {
               ))}
             </select>
           </label>
-          <label className="flex flex-col">
+          <label className="flex flex-col text-sm">
             Pad krova
-            <select className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900" value={padKrova} onChange={e => setPadKrova(parseInt(e.target.value))}>
+            <select className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900" value={padKrova} onChange={e => setPadKrova(parseInt(e.target.value))}>
               <option value={1}>Jedna voda</option>
               <option value={2}>Dve vode</option>
             </select>
           </label>
-          {isAdmin && (
-            <label className="flex flex-col">
-              Cena po kg (€/kg)
-              <input type="number" className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900" value={pricePerKg} onChange={e => setPricePerKg(parseFloat(e.target.value) || 0)} />
-            </label>
-          )}
-          <label className="flex flex-col">
-            Površina hale (m²):
-            <div className="flex items-center h-full min-h-[0px]">
-              <h1 className="text-2xl font-bold">{calculations.povrsinaHale}m²</h1>
-            </div>
-          </label>
         </div>
+        {isAdmin && (
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={copyPonudaToClipboard}
+              className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center gap-2 text-sm"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              {copiedNotification ? 'Kopirano!' : 'Kopiraj ponudu'}
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Stubovi, Binderi i Roznjace */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
         {/* Stubovi */}
-        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
-          <h2 className="text-2xl font-semibold mb-4">Stubovi</h2>
-          {isAdmin && (<div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2">
+        <section className="p-4 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
+          <h2 className="text-lg font-semibold mb-2">Stubovi</h2>
+          {isAdmin && (<div className="mb-2">
+            <p className="text-sm text-gray-600">
               Visina hale: <strong>{height}m</strong> → Dužina stuba: <strong>{stubDuzina}m</strong>
             </p>
           </div>)}
-          <div className="grid grid-cols-1 gap-6">
-            <label>
+          <div className="grid grid-cols-1 gap-3">
+            <label className="flex flex-col text-sm">
               Tip stuba i debljina
               <select
-                className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full"
+                className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full"
                 value={selectedStubIndex}
                 onChange={e => setSelectedStubIndex(parseInt(e.target.value))}
               >
@@ -663,9 +677,9 @@ export default function Kalkulator() {
             </label>
           </div>
           {selectedStub && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-2 space-y-2">
               {isAdmin && (
-                <div className="p-3 bg-gray-100 rounded-md">
+                <div className="p-2 bg-gray-100 rounded-md">
                   <p className="text-sm">
                     <strong>Izabrano:</strong> {selectedStub.tip} x {selectedStub.debljina} (dužina: {stubDuzina}m) - {selectedStub.tezina}kg
                     {selectedStub.dodatnaTezina && ` + ${selectedStub.dodatnaTezina}kg = ${selectedStub.tezina + selectedStub.dodatnaTezina}kg`}
@@ -678,20 +692,20 @@ export default function Kalkulator() {
         </section>
 
         {/* Binderi */}
-        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
-          <h2 className="text-2xl font-semibold mb-4">Binderi/krovni nosač</h2>
+        <section className="p-4 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+          <h2 className="text-lg font-semibold mb-2">Binderi/krovni nosač</h2>
           {isAdmin && (
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">
+            <div className="mb-2">
+              <p className="text-sm text-gray-600">
                 Širina hale: <strong>{width}m</strong> → Kategorija: <strong>{widthCategory}m</strong>
               </p>
             </div>
           )}
-          <div className="mb-4">
-            <label className="flex flex-col">
+          <div className="mb-2">
+            <label className="flex flex-col text-sm">
               Broj bindera
               <select
-                className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full"
+                className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full"
                 value={finalBrojBindera}
                 onChange={e => {
                   const value = parseInt(e.target.value) || 2
@@ -717,14 +731,14 @@ export default function Kalkulator() {
               </p>
             </label>
           </div>
-          <div className="mb-4">
-            <label className="flex flex-col">
-              <span className="mb-2">Tip bindera</span>
-              <div className="flex gap-2 mt-2">
+          <div className="mb-2">
+            <label className="flex flex-col text-sm">
+              <span>Nosivost</span>
+              <div className="flex gap-2 mt-1">
                 <button
                   type="button"
                   onClick={() => setBinderType('standardni')}
-                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     binderType === 'standardni'
                       ? 'bg-gray-900 text-white'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -736,7 +750,7 @@ export default function Kalkulator() {
                   <button
                     type="button"
                     onClick={() => setBinderType('jaci')}
-                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                       binderType === 'jaci'
                         ? 'bg-gray-900 text-white'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -748,34 +762,17 @@ export default function Kalkulator() {
               </div>
             </label>
           </div>
-          {binderData && dostupniBinderi.length > 0 && (
-            <div className="mb-4">
-              <div className="p-3 bg-gray-100 rounded-md">
-                <p className="font-semibold text-sm mb-2 text-gray-900">Profili bindera:</p>
-                <ul className="space-y-1">
-                  {dostupniBinderi.map((binder, index) => (
-                    <li key={index} className="text-m text-gray-700">
-                      • {binder.tip}x{binder.debljina}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-          {binderData && isAdmin && (
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-100 rounded-md">
-                <p className="font-semibold mb-2 text-gray-900">
-                  {hasBinderTypeOptions(widthCategory) && (
-                    <span className="mr-2">Tip: <strong>{binderType === 'standardni' ? 'Standardna nosivost' : 'Veća nosivost'}</strong> | </span>
-                  )}
-                  Masa bindera: {binderData.masa}kg
-                </p>
-                <p className="text-sm text-gray-700 mb-3">
-                  Broj rožnjača po binderu: <strong>{binderData.roznjace?.[padKrova.toString()] || 0}</strong> kom ({padKrova === 1 ? '1 voda' : '2 vode'})
-                </p>
-                <div className="mt-3">
-                  <p className="font-semibold text-sm mb-2 text-gray-900">Profili bindera:</p>
+          {binderData && (
+            <div className="p-2 bg-gray-100 rounded-md">
+              <p className="text-sm text-gray-700 mb-1">
+                Masa bindera: <strong>{binderData.masa}kg</strong>
+              </p>
+              <p className="text-sm text-gray-700 mb-2">
+                Broj rožnjača po binderu: <strong>{binderData.roznjace?.[padKrova.toString()] || 0}</strong> kom ({padKrova === 1 ? '1 voda' : '2 vode'})
+              </p>
+              {dostupniBinderi.length > 0 && (
+                <div className="mt-2">
+                  <p className="font-semibold text-sm mb-1 text-gray-900">Profili bindera:</p>
                   <ul className="space-y-1">
                     {dostupniBinderi.map((binder, index) => (
                       <li key={index} className="text-sm text-gray-700">
@@ -784,27 +781,27 @@ export default function Kalkulator() {
                     ))}
                   </ul>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </section>
 
         {/* Roznjace */}
-        <section className="p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
-          <h2 className="text-2xl font-semibold mb-4">Rožnjače/krovna letva</h2>
+        <section className="p-4 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
+          <h2 className="text-lg font-semibold mb-2">Rožnjače/krovna letva</h2>
           {isAdmin && (
-            <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">
+            <div className="mb-2">
+              <p className="text-sm text-gray-600">
                 Broj rožnjača po binderu: <strong>{binderData?.roznjace?.[padKrova.toString()] || 0}</strong> kom ({padKrova === 1 ? '1 voda' : '2 vode'})
                 {' × '}Dužina hale: <strong>{length}m</strong> = <strong>{(binderData?.roznjace?.[padKrova.toString()] || 0) * length}</strong> kom ukupno
               </p>
             </div>
           )}
-          <div className="grid grid-cols-1 gap-6">
-            <label>
+          <div className="grid grid-cols-1 gap-3">
+            <label className="flex flex-col text-sm">
               Tip rožnjače
               <select
-                className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full"
+                className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 w-full"
                 value={tipRoznjace}
                 onChange={e => setTipRoznjace(e.target.value)}
               >
@@ -820,7 +817,7 @@ export default function Kalkulator() {
             </label>
           </div>
           {tipRoznjace && ROZNJACE[tipRoznjace] && isAdmin && (
-            <div className="mt-4 p-3 bg-gray-100 rounded-md">
+            <div className="mt-2 p-2 bg-gray-100 rounded-md">
               <p className="text-sm">
                 <strong>Izabrano:</strong> {tipRoznjace} x 2.8mm
                 {' | '}Masa: {ROZNJACE[tipRoznjace]['2.8'].masa}kg po komadu
@@ -835,10 +832,10 @@ export default function Kalkulator() {
       {selectedStub && (ANKER_PLOCA_CENA[selectedStub.tip] || ANKER_SRAFO_CENA.find(item => item.tip === selectedStub.tip)) && (() => {
         const ankerSrafDataForDisplay = ANKER_SRAFO_CENA.find(item => item.tip === selectedStub.tip) || null
         return (
-        <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
-          <h2 className="text-2xl font-semibold mb-4">Opcije ankerisanja</h2>
-          <div className="space-y-4">
-            <div className="p-3 bg-gray-100 rounded-md">
+        <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+          <h2 className="text-lg font-semibold mb-2">Opcije ankerisanja</h2>
+          <div className="space-y-2">
+            <div className="p-2 bg-gray-100 rounded-md">
               <label className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -866,7 +863,7 @@ export default function Kalkulator() {
                 </div>
               </label>
             </div>
-            <div className="p-3 bg-gray-100 rounded-md">
+            <div className="p-2 bg-gray-100 rounded-md">
               <label className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -885,7 +882,7 @@ export default function Kalkulator() {
                   </span>
                   {ankerSrafDataForDisplay && (
                     <p className="text-xs text-gray-600 mt-1 ml-6">
-                      Opis: M{ankerSrafDataForDisplay.debljina.replace('mm', '')} x {ankerSrafDataForDisplay.duzina}
+                      Opis: {formatAnkerSrafOpis(ankerSrafDataForDisplay)}
                     </p>
                   )}
                   {includeAnkerSraf && ankerSrafDataForDisplay && (
@@ -901,13 +898,90 @@ export default function Kalkulator() {
         )
       })()}
 
+      {/* Ponuda */}
+      {isAdmin && (
+      <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
+          <h2 className="text-lg font-semibold">Ponuda</h2>
+          {isAdmin && <button
+            key="copy-ponuda"
+            type="button"
+            onClick={copyPonudaToClipboard}
+            className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center gap-2 self-center sm:self-auto shrink-0"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            {copiedNotification ? 'Kopirano!' : 'Kopiraj ponudu'}
+          </button>}
+        </div>
+        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <div className="space-y-2 text-sm leading-relaxed whitespace-pre-line">
+            <p>
+              <strong>Cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)} je: {formatPrice(calculations.ukupnaCena)}€</strong>.
+            </p>
+
+            <div className="mt-2">
+              <p className="font-semibold mb-1">Profili za konstrukciju:</p>
+              {selectedStub && (
+                <p><strong>Stubovi:</strong> {selectedStub.tip} x {selectedStub.debljina}</p>
+              )}
+              {binderData && dostupniBinderi.length > 0 && (
+                <p><strong>Binderi:</strong> {dostupniBinderi[0].tip} x {dostupniBinderi[0].debljina}</p>
+              )}
+              {tipRoznjace && ROZNJACE[tipRoznjace] && (
+                <p><strong>Rožnjače:</strong> {tipRoznjace} x 2.8mm</p>
+              )}
+            </div>
+
+            <p className="mt-2">
+              Ukupno ima <strong>{calculations.brojStubova} stubova</strong> i <strong>{calculations.brojBindera} bindera</strong>.
+            </p>
+
+            <p className="mt-2">
+              Stubovi i binderi se spajaju šrafovima, dok se rožnjače vare za L-profile koji su postavljeni na bindere.
+            </p>
+
+            {includeAnkerSraf && (
+              <p className="mt-2">
+                Uz konstrukciju dolaze šrafovi za bindere i anker šrafovi za beton ({formatAnkerSrafOpis(calculations.ankerSrafData)}). Takođe dolazi tehnički crtež sa dimenzijama i rasporedom montaže stubova.
+              </p>
+            )}
+
+            <p className="mt-2">
+              Kompletna konstrukcija je zaštićena i ofarbana u dve ruke osnovnom antikorozivnom farbom.
+            </p>
+
+            <p className="mt-2">
+              Prevoz i montaža nisu uključeni u cenu.
+              Montažu ne radimo, ali po potrebi možemo organizovati prevoz.
+            </p>
+
+            <p className="mt-2">
+              Naša proizvodnja je u Čačku
+            </p>
+            <p className="mt-1">
+              <a
+                href="https://maps.app.goo.gl/4Gc6WEnsANG1E5Ya7"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-red-700 underline break-all"
+              >
+                https://maps.app.goo.gl/4Gc6WEnsANG1E5Ya7
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+      )}
+
       {/* Rezultati */}
-      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
-        <h2 className="text-2xl font-semibold mb-4">Rezultati</h2>
+      <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.1)' }}>
+        <h2 className="text-lg font-semibold mb-2">Rezultati</h2>
         {isAdmin && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            <div className="p-4 bg-gray-50 rounded-md shadow-sm">
-              <h3 className="font-semibold mb-2">Stubovi</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+            <div className="p-2 bg-gray-50 rounded-md shadow-sm text-sm">
+              <h3 className="font-semibold mb-1">Stubovi</h3>
               <ul className="space-y-1">
                 <li>Broj stubova: {calculations.brojStubova}</li>
                 <li>Razmak između stubova: {calculations.brojBindera > 1 ? formatPrice(length / (calculations.brojBindera - 1)) : formatPrice(0)} m</li>
@@ -916,8 +990,8 @@ export default function Kalkulator() {
                 <li>Ukupna cena: {formatPrice(calculations.ukupnaCenaStubova)} €</li>
               </ul>
             </div>
-            <div className="p-4 bg-gray-50 rounded-md shadow-sm">
-              <h3 className="font-semibold mb-2">Binderi</h3>
+            <div className="p-2 bg-gray-50 rounded-md shadow-sm text-sm">
+              <h3 className="font-semibold mb-1">Binderi</h3>
               <ul className="space-y-1">
                 <li>Broj bindera: {calculations.brojBindera}</li>
                 <li>Težina: {calculations.tezinaBindera} kg</li>
@@ -925,8 +999,8 @@ export default function Kalkulator() {
                 <li>Cena: {formatPrice(calculations.ukupnaCenaBindera)} €</li>
               </ul>
             </div>
-            <div className="p-4 bg-gray-50 rounded-md shadow-sm">
-              <h3 className="font-semibold mb-2">Rožnjače</h3>
+            <div className="p-2 bg-gray-50 rounded-md shadow-sm text-sm">
+              <h3 className="font-semibold mb-1">Rožnjače</h3>
               <ul className="space-y-1">
                 <li>Ukupno metara: {calculations.ukupanBrojRoznjaca} m</li>
                 <li>Težina po metru: {calculations.tezinaRoznjace} kg</li>
@@ -937,17 +1011,17 @@ export default function Kalkulator() {
             </div>
           </div>
         )}
-        <div className="p-6 bg-gray-100 rounded-md shadow-sm">
-          <div className="mb-4">
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Okvirna cena konstrukcije</h3>
-            <div className="text-2xl font-bold text-gray-900 mb-2">
+        <div className="p-3 bg-gray-100 rounded-md shadow-sm text-sm">
+          <div className="mb-2">
+            <h3 className="text-sm font-bold text-gray-900 mb-1">Okvirna cena konstrukcije</h3>
+            <div className="text-lg font-bold text-gray-900">
               {formatPrice(calculations.ukupnaCena)} €
             </div>
           </div>
           
-          <div className="mb-4 border-t pt-4">
-            <p className="font-semibold text-gray-800 mb-2">Šta ulazi u cenu:</p>
-            <ul className="space-y-1 text-gray-700">
+          <div className="mb-2 border-t pt-2">
+            <p className="font-semibold text-gray-800 mb-1">Šta ulazi u cenu:</p>
+            <ul className="space-y-0.5 text-gray-700">
               <li>• <strong>{calculations.brojStubova} stubova</strong> ({selectedStub?.tip} x {selectedStub?.debljina})</li>
               <li>• <strong>{calculations.brojBindera} bindera</strong> {binderData && dostupniBinderi.length > 0 && `(${dostupniBinderi[0].tip} x ${dostupniBinderi[0].debljina})`}</li>
               <li>• <strong>{calculations.ukupanBrojRoznjaca} metara rožnjača</strong> {tipRoznjace && ROZNJACE[tipRoznjace] && `(${tipRoznjace} x 2.8mm)`}</li>
@@ -955,20 +1029,20 @@ export default function Kalkulator() {
                 <li>• <strong>{calculations.brojStubova} anker ploča</strong> (Navoj M18 8,8 kvalitet, 30cm dužina)</li>
               )}
               {includeAnkerSraf && calculations.ukupnaCenaAnkerSraf > 0 && calculations.ankerSrafData && (
-                <li>• <strong>{calculations.brojStubova} anker šrafova</strong> (M{calculations.ankerSrafData.debljina.replace('mm', '')} x {calculations.ankerSrafData.duzina})</li>
+                <li>• <strong>{calculations.brojStubova} anker šrafova</strong> ({formatAnkerSrafOpis(calculations.ankerSrafData)})</li>
               )}
             </ul>
           </div>
 
           {isAdmin && (
-            <div className="mb-4 border-t pt-4 text-sm text-gray-600">
+            <div className="mb-2 border-t pt-2 text-sm text-gray-600">
               <p>Cena po metru kvadratnom: {formatPrice(calculations.cenaPoMetru)} €/m²</p>
               <p>Ukupna težina: {formatPrice(calculations.ukupnaTezina)} kg</p>
             </div>
           )}
 
-          <div className="border-t pt-4">
-            <p className="text-m text-gray-600 italic"><strong>Napomena:</strong></p>
+          <div className="border-t pt-2">
+            <p className="text-sm text-gray-600 italic"><strong>Napomena:</strong></p>
             <ul className="list-disc list-inside">
               <li>Prikazana cena je okvirna i može varirati.</li>
               <li>Za preciznu cenu i finalnu ponudu, molimo kontaktirajte nas.</li>
@@ -979,12 +1053,12 @@ export default function Kalkulator() {
           </div>
 
         </div>
-        <div className="mt-6 flex flex-wrap justify-center gap-4">
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
           {isAdmin && (
             <>
               <button
                 onClick={exportToPDF}
-                className="px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg shadow-md hover:bg-gray-800 transition-colors duration-200 flex items-center gap-2"
+                className="px-4 py-2 bg-gray-900 text-white text-sm font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200 flex items-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -993,7 +1067,7 @@ export default function Kalkulator() {
               </button>
               <button
                 onClick={() => setShowKreirajModal(true)}
-                className="px-6 py-3 bg-red-700 text-white font-semibold rounded-lg shadow-md hover:bg-red-800 transition-colors duration-200 flex items-center gap-2"
+                className="px-4 py-2 bg-red-700 text-white text-sm font-semibold rounded-md shadow-md hover:bg-red-800 transition-colors duration-200 flex items-center gap-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -1006,9 +1080,9 @@ export default function Kalkulator() {
       </section>
 
       {/* 3D Vizualizacija */}
-      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
-        <h2 className="text-2xl font-semibold mb-4">3D Vizualizacija hale</h2>
-        <p className="text-sm text-gray-600 mb-4">
+      <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+        <h2 className="text-lg font-semibold mb-2">3D Vizualizacija hale</h2>
+        <p className="text-sm text-gray-600 mb-2">
           Interaktivna 3D vizualizacija vaše hale sa svim elementima: stubovima, binderima i rožnjačama.
         </p>
         <div className="relative">
@@ -1026,104 +1100,48 @@ export default function Kalkulator() {
         </div>
       </section>
 
-      {/* Ponuda */}
       {isAdmin && (
-      <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-semibold">Ponuda</h2>
-          {isAdmin && <button
-            key="copy-ponuda"
-            onClick={copyPonudaToClipboard}
-            className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            {copiedNotification ? 'Kopirano!' : 'Kopiraj ponudu'}
-          </button>}
-        </div>
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <div className="space-y-4 text-sm leading-relaxed whitespace-pre-line">
-            <p>
-              <strong>Cena konstrukcije {length}m x {width}m x {height}m na {padKrova == 1 ? (<>jednu vodu</>) : (<>dve vode</>)} je: {formatPrice(calculations.ukupnaCena)}€</strong>.
-            </p>
-
-            <div className="mt-4">
-              <p className="font-semibold mb-2">Profili za konstrukciju:</p>
-              {selectedStub && (
-                <p><strong>Stubovi:</strong> {selectedStub.tip} x {selectedStub.debljina}</p>
-              )}
-              {binderData && dostupniBinderi.length > 0 && (
-                <p><strong>Binderi:</strong> {dostupniBinderi[0].tip} x {dostupniBinderi[0].debljina}</p>
-              )}
-              {tipRoznjace && ROZNJACE[tipRoznjace] && (
-                <p><strong>Rožnjače:</strong> {tipRoznjace} x 2.8mm</p>
-              )}
-            </div>
-
-            <p className="mt-4">
-              Ukupno ima <strong>{calculations.brojStubova} stubova</strong> i <strong>{calculations.brojBindera} bindera</strong>.
-            </p>
-
-            <p className="mt-4">
-              Stubovi i binderi se spajaju šrafovima, dok se rožnjače vare za L-profile koji su postavljeni na bindere.
-            </p>
-
-            <p className="mt-4">
-              Kompletna konstrukcija je zaštićena i ofarbana u dve ruke osnovnom antikorozivnom farbom.
-            </p>
-
-            <p className="mt-4">
-              Prevoz i montaža nisu uključeni u cenu.
-              Montažu ne radimo, ali po potrebi možemo organizovati prevoz.
-            </p>
-          </div>
-        </div>
-      </section>
-      )}
-
-      {isAdmin && (
-        <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
-          <h2 className="text-2xl font-semibold mb-4">Dodatni troškovi: Kalkulacija</h2>
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <label className="flex flex-col">
+        <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: 'rgba(185, 28, 28, 0.3)' }}>
+          <h2 className="text-lg font-semibold mb-2">Dodatni troškovi: Kalkulacija</h2>
+        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <label className="flex flex-col text-sm">
               Povrsina krova (m²):
               <input
                 type="number"
                 step="1"
                 min="0"
                 max="5000"
-                className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
                 value={povrsinaKrova}
                 onChange={e => setPovrsinaKrova(parseInt(e.target.value))}
               />
             </label>
-            <label className="flex flex-col">
+            <label className="flex flex-col text-sm">
               Cena lima po kg (€/kg):
               <input
                 type="number"
                 step="0.1"
                 min="0"
                 max="1000"
-                className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
                 value={cenaLimaPoKg}
                 onChange={e => setCenaLimaPoKg(parseFloat(e.target.value))}
               />
             </label>
-            <label className="flex flex-col">
+            <label className="flex flex-col text-sm">
               Cena panela po m² (€/m²):
               <input
                 type="number"
                 step="0.1"
                 min="0"
                 max="100"
-                className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+                className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
                 value={cenaPanelPoM2}
                 onChange={e => setCenaPanelPoM2(parseFloat(e.target.value))}
               />
             </label>
-            <div className="p-4 col-span-full bg-gray-100 rounded-md shadow-sm font-bold text-lg text-gray-800">
+            <div className="p-2 col-span-full bg-gray-100 rounded-md shadow-sm font-bold text-sm text-gray-800">
               Cena limenog krova: {formatPrice(calculations.cenaKrova)} €
               <br />
               Cena panela: {formatPrice(calculations.cenaPanel)} €
@@ -1135,24 +1153,24 @@ export default function Kalkulator() {
 
       {/* Ostali parametri */}
       {isAdmin && (
-        <section className="mb-6 p-6 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
-          <h2 className="text-2xl font-semibold mb-4">Ostali parametri</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-          <label className="flex flex-col">
+        <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
+          <h2 className="text-lg font-semibold mb-2">Ostali parametri</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <label className="flex flex-col text-sm">
             Cena materijala po kg (€/kg)
             <input
               type="number"
               step="0.05"
-              className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
               value={cenaMaterijalaPoKg}
               onChange={e => setCenaMaterijalaPoKg(parseFloat(e.target.value) || 0)}
             />
           </label>
-          <label className="flex flex-col">
+          <label className="flex flex-col text-sm">
             Naziv projekta (za PDF)
             <input
               type="text"
-              className="mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
               value={projectName}
               onChange={e => setProjectName(e.target.value)}
               placeholder="Unesite naziv projekta (opciono)"
@@ -1160,6 +1178,22 @@ export default function Kalkulator() {
             <p className="text-xs text-gray-500 mt-1">
               Naziv će biti uključen u ime PDF fajla
             </p>
+          </label>
+          <label className="flex flex-col text-sm">
+            Cena po kg (€/kg)
+            <input
+              type="number"
+              step="0.05"
+              className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
+              value={pricePerKg}
+              onChange={e => setPricePerKg(parseFloat(e.target.value) || 0)}
+            />
+          </label>
+          <label className="flex flex-col text-sm">
+            Površina hale (m²)
+            <div className="mt-1 p-1.5 border rounded-md bg-gray-50 font-bold text-sm">
+              {calculations.povrsinaHale}m²
+            </div>
           </label>
         </div>
       </section>

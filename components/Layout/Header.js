@@ -44,23 +44,29 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/kalkulator"
-              className="px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
-            >
-              Kalkulator
-            </Link>
             {isAdmin && (
-              <Link
-                href="/admin/projekti"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  pathname === '/admin/projekti'
-                    ? 'bg-red-700 text-white'
-                    : 'text-red-700 hover:bg-red-50'
-                }`}
-              >
-                Projekti
-              </Link>
+              <>
+                <Link
+                  href="/kalkulator"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    pathname === '/kalkulator'
+                      ? 'bg-red-700 text-white'
+                      : 'text-red-700 hover:bg-red-50'
+                  }`}
+                >
+                  Kalkulator
+                </Link>
+                <Link
+                  href="/admin/projekti"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    pathname === '/admin/projekti'
+                      ? 'bg-red-700 text-white'
+                      : 'text-red-700 hover:bg-red-50'
+                  }`}
+                >
+                  Projekti
+                </Link>
+              </>
             )}
           </nav>
 
@@ -112,25 +118,31 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/kalkulator"
-              className="block px-4 py-2 bg-gray-900 text-white rounded-md text-sm font-medium mt-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Kalkulator
-            </Link>
             {isAdmin && (
-              <Link
-                href="/admin/projekti"
-                className={`block px-4 py-2 rounded-md text-sm font-medium mt-2 ${
-                  pathname === '/admin/projekti'
-                    ? 'bg-red-700 text-white'
-                    : 'text-red-700 hover:bg-red-50'
-                }`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Projekti
-              </Link>
+              <>
+                <Link
+                  href="/kalkulator"
+                  className={`block px-4 py-2 rounded-md text-sm font-medium mt-2 ${
+                    pathname === '/kalkulator'
+                      ? 'bg-red-700 text-white'
+                      : 'text-red-700 hover:bg-red-50'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Kalkulator
+                </Link>
+                <Link
+                  href="/admin/projekti"
+                  className={`block px-4 py-2 rounded-md text-sm font-medium mt-2 ${
+                    pathname === '/admin/projekti'
+                      ? 'bg-red-700 text-white'
+                      : 'text-red-700 hover:bg-red-50'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Projekti
+                </Link>
+              </>
             )}
           </nav>
         )}
