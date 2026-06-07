@@ -6,28 +6,32 @@ export const STUBOVI_PO_DUZINI = {
   ],
   '3': [
     { tip: '100x100', debljina: '2.8mm', tezina: 27, ploca: 10 },
-    { tip: '100x100', debljina: '3.8mm', tezina: 36, ploca: 10 }
+    { tip: '100x100', debljina: '3.8mm', tezina: 36, ploca: 10 },
+    { tip: '120x120', debljina: '3.8mm', tezina: 45, ploca: 15 }
   ],
   '4': [
     { tip: '100x100', debljina: '2.8mm', tezina: 36, ploca: 10 },
     { tip: '100x100', debljina: '3.8mm', tezina: 48, ploca: 10 },
     { tip: '120x120', debljina: '3.8mm', tezina: 58, ploca: 15 },
-    { tip: '120x120', debljina: '4.8mm', tezina: 70, ploca: 15 }
+    { tip: '120x120', debljina: '4.8mm', tezina: 70, ploca: 15 },
+    { tip: '120x120', debljina: '5.6mm', tezina: 82, ploca: 15 }
   ],
   '4.5': [
     { tip: '100x100', debljina: '3.8mm', tezina: 55, ploca: 10 },
     { tip: '120x120', debljina: '3.8mm', tezina: 65, ploca: 15 },
     { tip: '120x120', debljina: '4.8mm', tezina: 78, ploca: 15 },
-    { tip: '150x150', debljina: '4.8mm', tezina: 100, ploca: 24 }
+    { tip: '150x150', debljina: '4.8mm', tezina: 100, ploca: 24 },
+    { tip: '120x120', debljina: '5.6mm', tezina: 92, ploca: 15 }
   ],
   '5': [
     { tip: '100x100', debljina: '3.8mm', tezina: 60, dodatnaTezina: 12, ploca: 10 },
     { tip: '120x120', debljina: '3.8mm', tezina: 72, dodatnaTezina: 14, ploca: 15 },
     { tip: '120x120', debljina: '4.8mm', tezina: 85, dodatnaTezina: 17, ploca: 15 },
-    { tip: '150x150', debljina: '4.8mm', tezina: 110, dodatnaTezina: 22, ploca: 24 }
+    { tip: '150x150', debljina: '4.8mm', tezina: 110, dodatnaTezina: 22, ploca: 24 },
+    { tip: '120x120', debljina: '5.6mm', tezina: 105, dodatnaTezina: 22, ploca: 15 }
   ],
   '6': [
-    { tip: '120x120', debljina: '4.8mm', tezina: 105, ploca: 15 },
+    { tip: '120x120', debljina: '5.6mm', tezina: 120, ploca: 15 },
     { tip: '150x150', debljina: '4.8mm', tezina: 135, ploca: 24 },
     { tip: '150x150', debljina: '5.8mm', tezina: 160, ploca: 24 }
   ]
@@ -58,14 +62,27 @@ export const BINDERI_PO_SIRINI = {
     }
   },
   '7': {
-    masa: 135,
-    profili: [
-      { tip: '80x60', debljina: '2.8mm', duzina: 15 },
-      { tip: '40x40', debljina: '2.8mm', duzina: 10 }
-    ],
-    roznjace: {
-      '1': 8,
-      '2': 8
+    standardni: {
+      masa: 135,
+      profili: [
+        { tip: '80x60', debljina: '2.8mm', duzina: 15 },
+        { tip: '40x40', debljina: '2.8mm', duzina: 10 },
+      ],
+      roznjace: {
+        '1': 8,
+        '2': 8
+      }
+    },
+    jaci: {
+      masa: 160,
+      profili: [
+        { tip: '80x60', debljina: '3.8mm', duzina: 15 },
+        { tip: '40x40', debljina: '2.8mm', duzina: 10 }
+      ],
+      roznjace: {
+        '1': 8,
+        '2': 8
+      }
     }
   },
   '8': {
@@ -163,6 +180,32 @@ export const BINDERI_PO_SIRINI = {
         '2': 14
       }
     }
+  },
+  '14': {
+    standardni: {
+      masa: 450,
+      profili: [
+        { tip: '120x80', debljina: '3.8mm', duzina: 30 },
+        { tip: '50x50', debljina: '3.8mm', duzina: 20 }
+      ],
+      roznjace: {
+        '1': 16,
+        '2': 16
+      }
+    },
+  },
+  '16': {
+    standardni: {
+      masa: 560,
+      profili: [
+        { tip: '120x80', debljina: '3.8mm', duzina: 36 },
+        { tip: '50x50', debljina: '3.8mm', duzina: 28 }
+      ],
+      roznjace: {
+        '1': 18,
+        '2': 18
+      }
+    }
   }
 }
 
@@ -176,14 +219,20 @@ export const ROZNJACE = {
   },
   '80x40': {
     '2.8': {
-      masa: 4.9, // kg
-      cenaPoMetru: 8 // €/m
+      masa: 5.0, // kg
+      cenaPoMetru: 8.35 // €/m
     }
   },
-  '100x50': {
+  '80x60': {
     '2.8': {
-      masa: 6.2, // kg
+      masa: 6.0, // kg
       cenaPoMetru: 10 // €/m
+    }
+  },
+  '100x60': {
+    '2.8': {
+      masa: 6.8, // kg
+      cenaPoMetru: 12 // €/m
     }
   }
 }

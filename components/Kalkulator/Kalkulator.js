@@ -37,8 +37,8 @@ const parseDimenzije = (input) => {
   if (length < 1 || length > 100 || !Number.isInteger(length)) {
     return { error: 'Dužina mora biti ceo broj od 1 do 100 m' }
   }
-  if (width < 5 || width > 12 || !Number.isInteger(width)) {
-    return { error: 'Širina mora biti ceo broj od 5 do 12 m' }
+  if (width < 5 || width > 16 || !Number.isInteger(width)) {
+    return { error: 'Širina mora biti ceo broj od 5 do 16 m' }
   }
   if (!VALID_HEIGHTS.includes(height)) {
     return { error: 'Visina mora biti od 2.5 do 6 m (koraci 0.5)' }
@@ -170,7 +170,9 @@ export default function Kalkulator() {
     if (shedWidth < 9) return '8'
     if (shedWidth < 10) return '9'
     if (shedWidth < 12) return '10'
-    return '12'
+    if (shedWidth < 14) return '12'
+    if (shedWidth < 16) return '14'
+    return '16'
   }
 
   const widthCategory = getWidthCategory(width)
@@ -558,7 +560,7 @@ export default function Kalkulator() {
 
   const kreirajProjekatIzKalkulatora = async (e) => {
     e.preventDefault()
-    const slika3D = capture3DRef.current?.() || null
+    const slika3D = (await capture3DRef.current?.()) || null
     const detalji = {
       dimenzije: { length, width, height },
       padKrova: padKrova === 1 ? 'jedna voda' : 'dve vode',
@@ -1128,7 +1130,8 @@ export default function Kalkulator() {
             padKrova={padKrova}
             brojBindera={calculations.brojBindera}
             brojStubova={calculations.brojStubova}
-            brojRoznjaca={calculations.ukupanBrojRoznjaca}
+            brojRoznjacaPoBinderu={binderData?.roznjace?.[padKrova.toString()] || 0}
+            ukupanBrojRoznjaca={calculations.ukupanBrojRoznjaca}
             binderProfili={dostupniBinderi}
             onCaptureReady={(fn) => { capture3DRef.current = fn }}
           />

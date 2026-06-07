@@ -1,11 +1,13 @@
 'use client'
 
-import { useRef } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Grid } from '@react-three/drei'
+import { useRef, useState, useCallback, useEffect } from 'react'
+import html2canvas from 'html2canvas'
+import * as THREE from 'three'
+import { Canvas, useThree } from '@react-three/fiber'
+import { OrbitControls, Line, Html } from '@react-three/drei'
 
 // Component for a single post (stub)
-function Post({ position, height, color = '#4a5568' }) {
+function Post({ position, height, color = VIS_COLORS.post }) {
   const postRef = useRef()
 
   return (
@@ -18,12 +20,12 @@ function Post({ position, height, color = '#4a5568' }) {
       {/* Base plate (anker ploča) at bottom */}
       <mesh position={[0, -height / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.2, 0.05, 0.2]} />
-        <meshStandardMaterial color="#2d3748" metalness={0.5} roughness={0.5} />
+        <meshStandardMaterial color={VIS_COLORS.anker} metalness={0.45} roughness={0.55} />
       </mesh>
       {/* Top plate (anker ploča) at top */}
       <mesh position={[0, height / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.2, 0.05, 0.2]} />
-        <meshStandardMaterial color="#2d3748" metalness={0.5} roughness={0.5} />
+        <meshStandardMaterial color={VIS_COLORS.anker} metalness={0.45} roughness={0.55} />
       </mesh>
     </group>
   )
@@ -31,30 +33,29 @@ function Post({ position, height, color = '#4a5568' }) {
 
 // Helper function to create a beam from point A to point B
 function BeamFromTo({ from, to, size, color }) {
-  const dx = to[0] - from[0]
-  const dy = to[1] - from[1]
-  const dz = to[2] - from[2]
-  const length = Math.sqrt(dx * dx + dy * dy + dz * dz)
-
+  const direction = new THREE.Vector3(
+    to[0] - from[0],
+    to[1] - from[1],
+    to[2] - from[2],
+  )
+  const length = direction.length()
   if (length === 0) return null
 
-  // Calculate midpoint
-  const midX = (from[0] + to[0]) / 2
-  const midY = (from[1] + to[1]) / 2
-  const midZ = (from[2] + to[2]) / 2
+  const midpoint = new THREE.Vector3(
+    (from[0] + to[0]) / 2,
+    (from[1] + to[1]) / 2,
+    (from[2] + to[2]) / 2,
+  )
 
-  // Calculate rotation using Euler angles
-  // boxGeometry extends along Y axis, so we need to rotate it to point from 'from' to 'to'
-  // First, calculate the angle in the horizontal plane (XZ)
-  const horizontalAngle = Math.atan2(dx, dz)
-  // Then, calculate the vertical angle
-  const horizontalLength = Math.sqrt(dx * dx + dz * dz)
-  const verticalAngle = Math.atan2(dy, horizontalLength)
+  const quaternion = new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    direction.normalize(),
+  )
 
   return (
     <mesh
-      position={[midX, midY, midZ]}
-      rotation={[verticalAngle, horizontalAngle, 0]}
+      position={midpoint}
+      quaternion={quaternion}
       castShadow
       receiveShadow
     >
@@ -64,63 +65,125 @@ function BeamFromTo({ from, to, size, color }) {
   )
 }
 
-// Component for a binder - triangular or rectangular frame with vertical supports
-function Binder({ position, width, padKrova, roofSlopeRatio, maxRoofHeight, profili, roznjacePositions }) {
-  const mainProfile = profili?.[0] // Larger profile (e.g., 80x60)
-  const crossProfile = profili?.[1] // Smaller profile (e.g., 40x40)
+const SLAB_THICKNESS = 0.5 // 50 cm betonska ploča
+const ANKER_PLATE_SIZE = 0.2 // anker ploča 20×20 cm
+const SLAB_OVERHANG_BEYOND_ANKER = 0.1 // 10 cm iza spoljašnje ivice anker ploče
+const SLAB_EDGE_INSET = ANKER_PLATE_SIZE / 2 + SLAB_OVERHANG_BEYOND_ANKER
 
-  // Profile dimensions (approximate based on tip like "80x60")
-  const mainSize = mainProfile ? parseFloat(mainProfile.tip.split('x')[0]) / 1000 : 0.08 // Convert mm to meters
+// Paleta usklađena sa prigušenom zelenom podlogom — archviz, bez jarkih tonova
+const VIS_COLORS = {
+  post: '#586770',        // toplo čelično siva — stubovi
+  anker: '#3f484e',       // tamna anker ploča
+  binderMain: '#4a6570',  // slate plavo-zelena — glavni profili bindera
+  binderCross: '#607a84', // svetliji slate — sipke i dijagonale
+  purlin: '#874a3c',      // prigušeni iron oxide red — rožnjače
+  slab: '#b5b0a8',        // topli beton
+  background: '#d6d2cb',  // svetlija siva od betona — pozadina scene
+  dimension: '#3f5860',   // tamni slate — kotirne linije
+}
+
+const ROOF_PITCH_DEGREES_1_VODA = 8.5
+const ROOF_PITCH_DEGREES_2_VODE = 10
+
+function getRoofGeometry(width, padKrova) {
+  const roofPitchDegrees = padKrova === 1 ? ROOF_PITCH_DEGREES_1_VODA : ROOF_PITCH_DEGREES_2_VODE
+  const roofPitchAngle = (roofPitchDegrees * Math.PI) / 180
+  const roofSlopeRatio = Math.tan(roofPitchAngle)
+  const slopeRun = padKrova === 1 ? width : width / 2
+  const maxRoofHeight = slopeRun * roofSlopeRatio
+  const slopeLength = Math.sqrt(slopeRun ** 2 + maxRoofHeight ** 2)
+
+  return { roofSlopeRatio, roofPitchAngle, maxRoofHeight, slopeRun, slopeLength }
+}
+
+function getStubTopHeight(zPos, width, padKrova, maxRoofHeight) {
+  if (padKrova === 1) {
+    const distanceFromLeft = zPos - (-width / 2)
+    return maxRoofHeight * (distanceFromLeft / width)
+  }
+  const distanceFromCenter = Math.abs(zPos)
+  return maxRoofHeight * (1 - distanceFromCenter / (width / 2))
+}
+
+// Dijagonale: gornji čvor višeg polja → donji čvor sledećeg, u pravcu pada krova
+function getDiagonalBraces(stubPositions, width, padKrova, maxRoofHeight) {
+  const sorted = [...stubPositions].sort((a, b) => a - b)
+  const braces = []
+
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const zA = sorted[i]
+    const zB = sorted[i + 1]
+    const midZ = (zA + zB) / 2
+
+    let zTop, zBottom
+    if (padKrova === 1) {
+      // Pad ka nižoj strani (manji z)
+      zTop = zB
+      zBottom = zA
+    } else if (midZ <= 0) {
+      // Leva polovina: pad od sliva ka levoj ivici
+      zTop = zB
+      zBottom = zA
+    } else {
+      // Desna polovina: pad od sliva ka desnoj ivici
+      zTop = zA
+      zBottom = zB
+    }
+
+    const topY = getStubTopHeight(zTop, width, padKrova, maxRoofHeight)
+    if (topY < 0.01) continue
+
+    braces.push({
+      from: [0, 0, zBottom],
+      to: [0, topY, zTop],
+    })
+  }
+
+  return braces
+}
+
+// Component for a binder - triangular or rectangular frame with vertical supports
+function Binder({ position, width, padKrova, maxRoofHeight, profili, stubPositions }) {
+  const mainProfile = profili?.[0]
+  const crossProfile = profili?.[1]
+
+  const mainSize = mainProfile ? parseFloat(mainProfile.tip.split('x')[0]) / 1000 : 0.08
   const crossSize = crossProfile ? parseFloat(crossProfile.tip.split('x')[0]) / 1000 : 0.04
 
-  const color = '#48bb78'
-  const crossColor = '#38a169' // Slightly darker green for cross-beams
+  const color = VIS_COLORS.binderMain
+  const crossColor = VIS_COLORS.binderCross
 
-  // Calculate triangle dimensions for 2 vode
-  const triangleHeight = maxRoofHeight
-  const triangleBase = width
-  const leftSlopeLength = Math.sqrt((triangleBase / 2) ** 2 + triangleHeight ** 2)
-  const leftSlopeAngle = Math.atan2(triangleHeight, triangleBase) // Angle in YZ plane
+  const diagonalBraces = crossProfile && stubPositions
+    ? getDiagonalBraces(stubPositions, width, padKrova, maxRoofHeight)
+    : []
 
   return (
     <group position={position}>
       {padKrova === 1 ? (
-        // Single slope (1 voda) - Triangular frame
         <group>
-          {/* 1. Bottom horizontal beam - lies on posts */}
           <mesh position={[0, 0, 0]} castShadow receiveShadow>
             <boxGeometry args={[mainSize, mainSize, width]} />
             <meshStandardMaterial color={color} metalness={0.3} roughness={0.7} />
           </mesh>
 
-          {/* 2. Left vertical beam - stands on left post, small height */}
           <mesh position={[0, maxRoofHeight / 2, width / 2]} castShadow receiveShadow>
             <boxGeometry args={[mainSize, maxRoofHeight, mainSize]} />
             <meshStandardMaterial color={color} metalness={0.3} roughness={0.7} />
           </mesh>
 
-          {/* 3. Top sloped beam - connects vertical beam to right end of bottom beam */}
-          {(() => {
-            const topBeamLength = Math.sqrt(width ** 2 + maxRoofHeight ** 2)
-            const topBeamAngle = Math.atan2(maxRoofHeight, width)
-            return (
-              <mesh
-                position={[0, maxRoofHeight / 2, 0]}
-                rotation={[-90 + 2.2 * topBeamAngle, 0, 0]}
-                castShadow
-                receiveShadow
-              >
-                <boxGeometry args={[mainSize, topBeamLength, mainSize]} />
-                <meshStandardMaterial color={color} metalness={0.3} roughness={0.7} />
-              </mesh>
-            )
-          })()}
+          <BeamFromTo
+            from={[0, 0, -width / 2]}
+            to={[0, maxRoofHeight, width / 2]}
+            size={mainSize}
+            color={color}
+          />
 
-          {/* Vertical supports (stubici) at roznjace positions */}
-          {crossProfile && roznjacePositions && roznjacePositions.map((zPos, idx) => {
+          {crossProfile && stubPositions && stubPositions.map((zPos, idx) => {
             const distanceFromLeft = zPos - (-width / 2)
             const topBeamY = maxRoofHeight * (1 - distanceFromLeft / width)
             const supportHeight = maxRoofHeight - topBeamY
+
+            if (supportHeight < 0.01) return null
 
             return (
               <mesh
@@ -136,41 +199,31 @@ function Binder({ position, width, padKrova, roofSlopeRatio, maxRoofHeight, prof
           })}
         </group>
       ) : (
-        // Two slopes (2 vode) - Triangular frame
         <group>
-          {/* Bottom horizontal beam - base of triangle */}
           <mesh position={[0, 0, 0]} castShadow receiveShadow>
             <boxGeometry args={[mainSize, mainSize, width]} />
             <meshStandardMaterial color={color} metalness={0.3} roughness={0.7} />
           </mesh>
 
-          {/* Left sloped beam */}
-          <mesh
-            position={[0, maxRoofHeight / 2, -width / 4]}
-            rotation={[-90 + 1.5 * leftSlopeAngle, 0, 0]}
-            castShadow
-            receiveShadow
-          >
-            <boxGeometry args={[mainSize, leftSlopeLength, mainSize]} />
-            <meshStandardMaterial color={color} metalness={0.3} roughness={0.7} />
-          </mesh>
+          <BeamFromTo
+            from={[0, 0, -width / 2]}
+            to={[0, maxRoofHeight, 0]}
+            size={mainSize}
+            color={color}
+          />
+          <BeamFromTo
+            from={[0, 0, width / 2]}
+            to={[0, maxRoofHeight, 0]}
+            size={mainSize}
+            color={color}
+          />
 
-          {/* Right sloped beam */}
-          <mesh
-            position={[0, maxRoofHeight / 2, width / 4]}
-            rotation={[90 - 1.5 * leftSlopeAngle, 0, 0]}
-            castShadow
-            receiveShadow
-          >
-            <boxGeometry args={[mainSize, leftSlopeLength, mainSize]} />
-            <meshStandardMaterial color={color} metalness={0.3} roughness={0.7} />
-          </mesh>
-
-          {/* Vertical supports (stubici) at roznjace positions */}
-          {crossProfile && roznjacePositions && roznjacePositions.map((zPos, idx) => {
+          {crossProfile && stubPositions && stubPositions.map((zPos, idx) => {
             const distanceFromCenter = Math.abs(zPos)
             const topBeamY = maxRoofHeight * (1 - distanceFromCenter / (width / 2))
             const supportHeight = topBeamY
+
+            if (supportHeight < 0.01) return null
 
             return (
               <mesh
@@ -186,12 +239,99 @@ function Binder({ position, width, padKrova, roofSlopeRatio, maxRoofHeight, prof
           })}
         </group>
       )}
+
+      {diagonalBraces.map((brace, idx) => (
+        <BeamFromTo
+          key={`diag-${idx}`}
+          from={brace.from}
+          to={brace.to}
+          size={crossSize}
+          color={crossColor}
+        />
+      ))}
     </group>
   )
 }
 
+const RIDGE_PURLIN_OFFSET = 0.03 // dve rožnjače priljubljene na slivu (2 vode)
+
+// Pozicije rožnjača popreko širine
+function getRoznjacePositions(width, count, padKrova) {
+  if (count <= 0) return []
+  if (count === 1) return [0]
+
+  const leftEdge = -width / 2
+  const rightEdge = width / 2
+
+  // 2 vode: kraj + kraj + dve priljubljene na slivu + ravnomerno po obe polovine
+  if (padKrova === 2) {
+    if (count === 2) return [leftEdge, rightEdge]
+    if (count === 3) return [leftEdge, 0, rightEdge]
+
+    const leftCenter = -RIDGE_PURLIN_OFFSET
+    const rightCenter = RIDGE_PURLIN_OFFSET
+    const middle = count - 4
+    const leftMiddleCount = Math.floor(middle / 2)
+    const rightMiddleCount = middle - leftMiddleCount
+    const positions = [leftEdge]
+
+    for (let i = 1; i <= leftMiddleCount; i++) {
+      positions.push(leftEdge + (i / (leftMiddleCount + 1)) * (leftCenter - leftEdge))
+    }
+
+    positions.push(leftCenter, rightCenter)
+
+    for (let i = 1; i <= rightMiddleCount; i++) {
+      positions.push(rightCenter + (i / (rightMiddleCount + 1)) * (rightEdge - rightCenter))
+    }
+
+    positions.push(rightEdge)
+    return positions
+  }
+
+  // 1 voda: kraj + kraj + ravnomerno između
+  const positions = []
+  for (let i = 0; i < count; i++) {
+    positions.push(leftEdge + i * (width / (count - 1)))
+  }
+  return positions
+}
+
+// Pozicije vertikalnih sipki u binderu — 2 vode: jedna na slivu, ne dve
+function getBinderStubPositions(width, count, padKrova) {
+  if (count <= 0) return []
+  if (padKrova === 1) return getRoznjacePositions(width, count, padKrova)
+
+  const leftEdge = -width / 2
+  const rightEdge = width / 2
+
+  if (count === 1) return [0]
+  if (count === 2) return []
+  if (count === 3) return [0]
+  if (count === 4) return [0]
+
+  const leftRidge = -RIDGE_PURLIN_OFFSET
+  const rightRidge = RIDGE_PURLIN_OFFSET
+  const middle = count - 4
+  const leftMiddleCount = Math.floor(middle / 2)
+  const rightMiddleCount = middle - leftMiddleCount
+  const positions = []
+
+  for (let i = 1; i <= leftMiddleCount; i++) {
+    positions.push(leftEdge + (i / (leftMiddleCount + 1)) * (leftRidge - leftEdge))
+  }
+
+  positions.push(0)
+
+  for (let i = 1; i <= rightMiddleCount; i++) {
+    positions.push(rightRidge + (i / (rightMiddleCount + 1)) * (rightEdge - rightRidge))
+  }
+
+  return positions
+}
+
 // Component for roof purlins (rožnjače) - run along the length
-function RoofPurlin({ position, length, rotation, color = '#ed8936' }) {
+function RoofPurlin({ position, length, rotation, color = VIS_COLORS.purlin }) {
   return (
     <mesh position={position} rotation={rotation} castShadow receiveShadow>
       <boxGeometry args={[length, 0.06, 0.06]} />
@@ -201,10 +341,9 @@ function RoofPurlin({ position, length, rotation, color = '#ed8936' }) {
 }
 
 // Main shed structure component
-function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubova, brojRoznjaca, binderProfili }) {
-  // Roof slope calculation - typical shed roof slope is 10-20%
-  const roofSlopeRatio = 0.15 // 15% slope
-  const maxRoofHeight = width * roofSlopeRatio // Maximum height difference for roof
+function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubova, brojRoznjacaPoBinderu, binderProfili }) {
+  const { roofPitchAngle, maxRoofHeight } = getRoofGeometry(width, padKrova)
+  const slabTopY = SLAB_THICKNESS // gornja površina ploče — od nje kreće konstrukcija
 
   // Calculate post positions
   const postsPerSide = brojBindera
@@ -215,9 +354,9 @@ function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubo
     for (let i = 0; i < postsPerSide; i++) {
       const xPos = i === 0 ? -length / 2 : (i === postsPerSide - 1 ? length / 2 : -length / 2 + i * postSpacing)
       // Left side posts (negative Z)
-      posts.push({ position: [xPos, height / 2, -width / 2], height })
+      posts.push({ position: [xPos, slabTopY + height / 2, -width / 2], height })
       // Right side posts (positive Z)
-      posts.push({ position: [xPos, height / 2, width / 2], height })
+      posts.push({ position: [xPos, slabTopY + height / 2, width / 2], height })
     }
   }
 
@@ -227,19 +366,11 @@ function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubo
     const xPos = postsPerSide > 1
       ? (i === 0 ? -length / 2 : (i === postsPerSide - 1 ? length / 2 : -length / 2 + i * postSpacing))
       : 0
-    binders.push({ position: [xPos, height, 0], width })
+    binders.push({ position: [xPos, slabTopY + height, 0], width })
   }
 
-  // Calculate roof purlins (rožnjače)
-  const roznjaceAcrossWidth = length > 0 ? Math.max(1, Math.floor(brojRoznjaca / length)) : 1
-  const purlinZSpacing = width / (roznjaceAcrossWidth + 1)
-
-  // Calculate roznjace Z positions for vertical supports in binders
-  const roznjacePositions = []
-  for (let zIdx = 0; zIdx < roznjaceAcrossWidth; zIdx++) {
-    const zPos = (zIdx + 1) * purlinZSpacing - width / 2
-    roznjacePositions.push(zPos)
-  }
+  const roznjacePositions = getRoznjacePositions(width, brojRoznjacaPoBinderu, padKrova)
+  const stubPositions = getBinderStubPositions(width, brojRoznjacaPoBinderu, padKrova)
 
   const roofPurlins = []
 
@@ -251,13 +382,13 @@ function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubo
     if (padKrova === 1) {
       const distanceFromLowSide = zPos - (-width / 2)
       const yOffset = (distanceFromLowSide / width) * maxRoofHeight
-      yPos = height + yOffset
-      roofAngle = Math.atan(roofSlopeRatio)
+      yPos = slabTopY + height + yOffset
+      roofAngle = roofPitchAngle
     } else {
       const distanceFromCenter = Math.abs(zPos)
       const yOffset = (distanceFromCenter / (width / 2)) * maxRoofHeight
-      yPos = height + maxRoofHeight - yOffset
-      roofAngle = Math.atan(roofSlopeRatio) * (zPos > 0 ? -1 : 1)
+      yPos = slabTopY + height + maxRoofHeight - yOffset
+      roofAngle = roofPitchAngle * (zPos > 0 ? -1 : 1)
     }
 
     return {
@@ -267,26 +398,16 @@ function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubo
     }
   }
 
-  // Add purlin at the left edge (start)
-  const leftEdgeZ = -width / 2
-  roofPurlins.push(calculatePurlinPosition(leftEdgeZ))
-
-  // Create continuous purlins running the full length (existing ones)
-  for (let zIdx = 0; zIdx < roznjaceAcrossWidth; zIdx++) {
-    const zPos = (zIdx + 1) * purlinZSpacing - width / 2
+  for (const zPos of roznjacePositions) {
     roofPurlins.push(calculatePurlinPosition(zPos))
   }
 
-  // Add purlin at the right edge (end)
-  const rightEdgeZ = width / 2
-  roofPurlins.push(calculatePurlinPosition(rightEdgeZ))
-
   return (
     <group>
-      {/* Ground/base platform */}
-      <mesh position={[0, 0, 0]} receiveShadow>
-        <boxGeometry args={[length, 0.1, width]} />
-        <meshStandardMaterial color="#e2e8f0" roughness={0.8} />
+      {/* Betonska ploča — donja ivica na y=0, 10 cm šire od anker ploča sa svake strane */}
+      <mesh position={[0, SLAB_THICKNESS / 2, 0]}>
+        <boxGeometry args={[length + 2 * SLAB_EDGE_INSET, SLAB_THICKNESS, width + 2 * SLAB_EDGE_INSET]} />
+        <meshStandardMaterial color={VIS_COLORS.slab} roughness={0.92} metalness={0.04} />
       </mesh>
 
       {/* Posts */}
@@ -301,10 +422,9 @@ function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubo
           position={binder.position}
           width={binder.width}
           padKrova={padKrova}
-          roofSlopeRatio={roofSlopeRatio}
           maxRoofHeight={maxRoofHeight}
           profili={binderProfili}
-          roznjacePositions={roznjacePositions}
+          stubPositions={stubPositions}
         />
       ))}
 
@@ -321,6 +441,96 @@ function ShedStructure({ length, width, height, padKrova, brojBindera, brojStubo
   )
 }
 
+const DIMENSION_LABEL_STYLE = {
+  color: '#0f172a',
+  fontSize: '100px',
+  fontWeight: 700,
+  background: 'rgba(255,255,255,0.97)',
+  padding: '8px 18px',
+  borderRadius: '10px',
+  border: `3px solid ${VIS_COLORS.dimension}`,
+  whiteSpace: 'nowrap',
+  pointerEvents: 'none',
+  userSelect: 'none',
+  boxShadow: '0 2px 12px rgba(15,23,42,0.18)',
+}
+
+function DimensionLabel({ position, children, portal }) {
+  return (
+    <Html position={position} center distanceFactor={2} zIndexRange={[100, 0]} portal={portal}>
+      <div style={DIMENSION_LABEL_STYLE}>{children}</div>
+    </Html>
+  )
+}
+
+function DimensionTick({ from, to, color = VIS_COLORS.dimension }) {
+  return <Line points={[from, to]} color={color} lineWidth={2.5} />
+}
+
+// Kotirne linije: D (dužina), S (širina), V (visina) — strana okrenuta ka kameri
+function DimensionAnnotations({ length, width, height, slabTopY, portal }) {
+  const gap = Math.max(0.45, Math.min(length, width) * 0.1)
+  const tick = 0.15
+  const lineColor = VIS_COLORS.dimension
+
+  const xMin = -length / 2
+  const xMax = length / 2
+  const zMin = -width / 2
+  const zMax = width / 2
+  const yBase = slabTopY
+  const yTop = slabTopY + height
+
+  // Kamera gleda sa +X, +Z — kotiramo sa te strane
+  const dZ = zMax + gap
+  const dY = yBase + 0.05
+  const sX = xMax + gap
+  const vX = xMax + gap * 0.55
+  const vZ = zMax + gap * 0.55
+
+  return (
+    <group>
+      {/* D — dužina */}
+      <DimensionTick from={[xMin, dY, dZ]} to={[xMax, dY, dZ]} color={lineColor} />
+      <DimensionTick from={[xMin, dY, dZ - tick]} to={[xMin, dY, dZ + tick]} color={lineColor} />
+      <DimensionTick from={[xMax, dY, dZ - tick]} to={[xMax, dY, dZ + tick]} color={lineColor} />
+      <DimensionLabel position={[(xMin + xMax) / 2, dY + 0.2, dZ]} portal={portal}>
+        D = {length} m
+      </DimensionLabel>
+
+      {/* S — širina */}
+      <DimensionTick from={[sX, dY, zMin]} to={[sX, dY, zMax]} color={lineColor} />
+      <DimensionTick from={[sX - tick, dY, zMin]} to={[sX + tick, dY, zMin]} color={lineColor} />
+      <DimensionTick from={[sX - tick, dY, zMax]} to={[sX + tick, dY, zMax]} color={lineColor} />
+      <DimensionLabel position={[sX, dY + 0.2, (zMin + zMax) / 2]} portal={portal}>
+        S = {width} m
+      </DimensionLabel>
+
+      {/* V — visina */}
+      <DimensionTick from={[vX, yBase, vZ]} to={[vX, yTop, vZ]} color={lineColor} />
+      <DimensionTick from={[vX - tick, yBase, vZ - tick]} to={[vX + tick, yBase, vZ + tick]} color={lineColor} />
+      <DimensionTick from={[vX - tick, yTop, vZ - tick]} to={[vX + tick, yTop, vZ + tick]} color={lineColor} />
+      <DimensionLabel position={[vX + 0.15, (yBase + yTop) / 2, vZ + 0.15]} portal={portal}>
+        V = {height} m
+      </DimensionLabel>
+    </group>
+  )
+}
+
+// Registruje funkciju za snimanje trenutnog kadra scene
+function CaptureRegistrar({ onCaptureReady }) {
+  const { gl, scene, camera } = useThree()
+
+  useEffect(() => {
+    if (!onCaptureReady) return
+    onCaptureReady(() => {
+      gl.render(scene, camera)
+      return gl.domElement?.toDataURL('image/png') || null
+    })
+  }, [gl, scene, camera, onCaptureReady])
+
+  return null
+}
+
 // Main visualization component
 export default function Shed3DVisualization({
   length,
@@ -329,48 +539,102 @@ export default function Shed3DVisualization({
   padKrova,
   brojBindera,
   brojStubova,
-  brojRoznjaca,
+  brojRoznjacaPoBinderu,
+  ukupanBrojRoznjaca,
   binderProfili = [],
   onCaptureReady,
 }) {
+  const containerRef = useRef(null)
+  const captureFnRef = useRef(null)
+  const [copyFeedback, setCopyFeedback] = useState(false)
+  const [isCopying, setIsCopying] = useState(false)
+
+  const registerCapture = useCallback((fn) => {
+    captureFnRef.current = fn
+  }, [])
+
+  const captureFullImage = useCallback(async () => {
+    captureFnRef.current?.()
+
+    if (!containerRef.current) return null
+
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve))
+    })
+
+    const canvas = await html2canvas(containerRef.current, {
+      backgroundColor: VIS_COLORS.background,
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      ignoreElements: (el) => el.hasAttribute('data-capture-ignore'),
+    })
+
+    return canvas.toDataURL('image/png')
+  }, [])
+
+  useEffect(() => {
+    if (!onCaptureReady) return
+    onCaptureReady(captureFullImage)
+  }, [onCaptureReady, captureFullImage])
+
+  const handleCopyToClipboard = async () => {
+    try {
+      setIsCopying(true)
+      const dataUrl = await captureFullImage()
+      if (!dataUrl) return
+
+      const blob = await (await fetch(dataUrl)).blob()
+      await navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob }),
+      ])
+
+      setCopyFeedback(true)
+      setTimeout(() => setCopyFeedback(false), 2500)
+    } catch (err) {
+      console.error('Greška pri kopiranju slike:', err)
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
   // Calculate camera position based on shed size
-  const maxDimension = Math.max(length, width, height)
-  const cameraDistance = maxDimension * 2.5
+  const maxDimension = Math.max(length, width, height + SLAB_THICKNESS)
+  const cameraDistance = maxDimension * 2.0
 
   return (
-    <div className="w-full h-[600px] bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg border border-gray-300 shadow-lg relative">
+    <div
+      ref={containerRef}
+      className="w-full h-[600px] rounded-lg border border-gray-300 shadow-lg relative overflow-hidden"
+      style={{ background: `linear-gradient(to bottom, ${VIS_COLORS.background}, #cac6bf)` }}
+    >
       <Canvas
-        shadows
+        className="!absolute inset-0"
         gl={{ antialias: true, preserveDrawingBuffer: true }}
         camera={{ position: [cameraDistance, cameraDistance * 0.8, cameraDistance], fov: 50 }}
         onCreated={({ gl }) => {
-          if (onCaptureReady) {
-            onCaptureReady(() => gl.domElement?.toDataURL('image/png') || null)
-          }
+          gl.setClearColor(VIS_COLORS.background)
         }}
       >
-        {/* Lighting */}
-        <ambientLight intensity={0.5} />
+        <CaptureRegistrar onCaptureReady={registerCapture} />
+        {/* Lighting — mekše, render stil */}
+        <ambientLight intensity={0.55} />
         <directionalLight
-          position={[10, 10, 5]}
-          intensity={1}
-          castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
+          position={[12, 14, 8]}
+          intensity={0.85}
         />
-        <pointLight position={[-10, 10, -10]} intensity={0.3} />
+        <directionalLight position={[-6, 8, -4]} intensity={0.25} />
+        <pointLight position={[-10, 10, -10]} intensity={0.15} />
 
         {/* Camera controls */}
         <OrbitControls
           enablePan={true}
           enableZoom={true}
           enableRotate={true}
-          minDistance={maxDimension * 1.5}
+          minDistance={maxDimension * 0.75}
           maxDistance={maxDimension * 5}
+          zoomSpeed={1.2}
         />
-
-        {/* Grid helper */}
-        <Grid args={[maxDimension * 2, maxDimension * 2]} cellColor="#e2e8f0" sectionColor="#cbd5e0" />
 
         {/* Shed structure */}
         <ShedStructure
@@ -380,27 +644,56 @@ export default function Shed3DVisualization({
           padKrova={padKrova}
           brojBindera={brojBindera}
           brojStubova={brojStubova}
-          brojRoznjaca={brojRoznjaca}
+          brojRoznjacaPoBinderu={brojRoznjacaPoBinderu}
           binderProfili={binderProfili}
         />
+
+        <DimensionAnnotations
+          length={length}
+          width={width}
+          height={height}
+          slabTopY={SLAB_THICKNESS}
+          portal={containerRef}
+        />
       </Canvas>
+
+      <button
+        type="button"
+        onClick={handleCopyToClipboard}
+        disabled={isCopying}
+        data-capture-ignore
+        className="absolute top-4 right-4 flex items-center gap-2 bg-white/95 hover:bg-white disabled:opacity-60 backdrop-blur-sm px-4 py-2 rounded-lg shadow-md text-sm font-medium text-slate-800 border border-slate-200 transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        {copyFeedback ? 'Slika kopirana!' : isCopying ? 'Kopiranje...' : 'Kopiraj sliku'}
+      </button>
+
+      {/* Dimenzije hale */}
+      <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-md text-sm border border-slate-200">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Dimenzije hale</p>
+        <p className="text-base font-bold text-slate-800">
+          {length} × {width} × {height} m
+        </p>
+        <p className="text-xs text-slate-500 mt-1">D × S × V</p>
+      </div>
 
       {/* Info overlay */}
       <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-md text-sm">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-3 h-3 bg-gray-600 rounded"></div>
+          <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: VIS_COLORS.post }} />
           <span>Stubovi ({brojStubova})</span>
         </div>
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-3 h-3 bg-green-500 rounded"></div>
+          <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: VIS_COLORS.binderMain }} />
           <span>Binderi ({brojBindera})</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-orange-500 rounded"></div>
-          <span>Rožnjače ({brojRoznjaca})</span>
+          <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: VIS_COLORS.purlin }} />
+          <span>Rožnjače ({brojRoznjacaPoBinderu} po binderu, {ukupanBrojRoznjaca} m ukupno)</span>
         </div>
       </div>
     </div>
   )
 }
-
