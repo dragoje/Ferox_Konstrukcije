@@ -196,9 +196,9 @@ export const ANKER_PLOCA_CENA = {
 }
 
 export const ANKER_SRAFO_CENA = [
-  { tip: '100x100', debljina: '16mm', duzina: '300mm', cena: 14 },
-  { tip: '120x120', debljina: '16mm', duzina: '300mm', cena: 16 },
-  { tip: '150x150', debljina: '20mm', duzina: '300mm', cena: 25 },
+  { tip: '100x100', debljina: '16mm', duzina: '300mm', cena: 10 },
+  { tip: '120x120', debljina: '16mm', duzina: '300mm', cena: 14 },
+  { tip: '150x150', debljina: '20mm', duzina: '300mm', cena: 20 },
 ]
 
 export const formatAnkerSrafOpis = (ankerSrafData) => {

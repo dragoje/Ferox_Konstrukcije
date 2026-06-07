@@ -19,6 +19,34 @@ const roundUpTo50 = (value) => {
   return Math.ceil(amount / 50) * 50
 }
 
+const VALID_HEIGHTS = Array.from({ length: 8 }, (_, i) => 2.5 + i * 0.5)
+
+const formatDimenzije = (l, w, h) => `${l}x${w}x${h}`
+
+const parseDimenzije = (input) => {
+  const trimmed = input.trim()
+  if (!trimmed) return { error: 'Unesite dimenzije' }
+
+  const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)$/i)
+  if (!match) return { error: 'Format: dužina x širina x visina (npr. 20x6x3)' }
+
+  const length = parseFloat(match[1])
+  const width = parseFloat(match[2])
+  const height = parseFloat(match[3])
+
+  if (length < 1 || length > 100 || !Number.isInteger(length)) {
+    return { error: 'Dužina mora biti ceo broj od 1 do 100 m' }
+  }
+  if (width < 5 || width > 12 || !Number.isInteger(width)) {
+    return { error: 'Širina mora biti ceo broj od 5 do 12 m' }
+  }
+  if (!VALID_HEIGHTS.includes(height)) {
+    return { error: 'Visina mora biti od 2.5 do 6 m (koraci 0.5)' }
+  }
+
+  return { length, width, height }
+}
+
 export default function Kalkulator() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -66,6 +94,26 @@ export default function Kalkulator() {
   const [cenaLimaPoKg, setCenaLimaPoKg] = useState(0)
   const [cenaPanelPoM2, setCenaPanelPoM2] = useState(0)
   const [copiedNotification, setCopiedNotification] = useState(false)
+  const [dimenzijeInput, setDimenzijeInput] = useState('6x5x2.5')
+  const [dimenzijeError, setDimenzijeError] = useState(null)
+
+  const applyDimenzije = (input) => {
+    const result = parseDimenzije(input)
+    if (result.error) {
+      setDimenzijeError(result.error)
+      setDimenzijeInput(formatDimenzije(length, width, height))
+      return
+    }
+    const { length: newLength, width: newWidth, height: newHeight } = result
+    if (newLength !== length) setBrojBindera(null)
+    setLength(newLength)
+    setWidth(newWidth)
+    setHeight(newHeight)
+    setDimenzijeInput(formatDimenzije(newLength, newWidth, newHeight))
+    setDimenzijeError(null)
+  }
+
+  const handleDimenzijeBlur = () => applyDimenzije(dimenzijeInput)
 
   // --- Stubovi ---
   const [selectedStubIndex, setSelectedStubIndex] = useState(0)
@@ -569,55 +617,34 @@ export default function Kalkulator() {
       {/* Hale parametri */}
       <section className="mb-4 p-4 rounded-lg shadow-md" style={{ backgroundColor: '#F0F0F0' }}>
         <h2 className="text-lg font-semibold mb-2">Parametri hale</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="flex flex-col text-sm">
-            Dužina (m)
-            <select
-              className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-              value={length}
+            Dimenzije hale (D × Š × V)
+            <input
+              type="text"
+              className={`mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 ${dimenzijeError ? 'border-red-500' : ''}`}
+              value={dimenzijeInput}
               onChange={e => {
-                const newLength = parseFloat(e.target.value) || 1
-                setLength(newLength)
-                // Resetuj broj bindera na predloženu vrednost kada se promeni dužina
-                setBrojBindera(null)
+                setDimenzijeInput(e.target.value)
+                setDimenzijeError(null)
               }}
-            >
-              {Array.from({ length: 100 }, (_, i) => i + 1).map(val => (
-                <option key={val} value={val}>{val}m</option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col text-sm">
-            Širina (m)
-            <select
-              className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-              value={width}
-              onChange={e => {
-                const newWidth = parseFloat(e.target.value) || 5
-                setWidth(newWidth)
+              onBlur={handleDimenzijeBlur}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  applyDimenzije(dimenzijeInput)
+                  e.target.blur()
+                }
               }}
-            >
-              {Array.from({ length: 8 }, (_, i) => 5 + i).map(val => (
-                <option key={val} value={val}>{val}m</option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col text-sm">
-            Visina (m)
-            <select
-              className="mt-1 p-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900"
-              value={height}
-              onChange={e => {
-                const newHeight = parseFloat(e.target.value) || 2.5
-                setHeight(newHeight)
-                setSelectedStubIndex(0) // Resetuj izbor stuba kada se promeni visina
-              }}
-            >
-              {Array.from({ length: 8 }, (_, i) => 2.5 + i * 0.5).map(val => (
-                <option key={val} value={val}>{val}m</option>
-              ))}
-            </select>
+              placeholder="npr. 20x6x3"
+            />
+            {dimenzijeError ? (
+              <p className="text-xs text-red-600 mt-1">{dimenzijeError}</p>
+            ) : (
+              <p className="text-xs text-gray-600 mt-1">
+                Dužina: <strong>{length}m</strong> · Širina: <strong>{width}m</strong> · Visina: <strong>{height}m</strong>
+              </p>
+            )}
           </label>
           <label className="flex flex-col text-sm">
             Pad krova
