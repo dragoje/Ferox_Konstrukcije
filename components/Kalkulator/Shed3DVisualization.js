@@ -657,42 +657,48 @@ export default function Shed3DVisualization({
         />
       </Canvas>
 
-      <button
-        type="button"
-        onClick={handleCopyToClipboard}
-        disabled={isCopying}
-        data-capture-ignore
-        className="absolute top-4 right-4 flex items-center gap-2 bg-white/95 hover:bg-white disabled:opacity-60 backdrop-blur-sm px-4 py-2 rounded-lg shadow-md text-sm font-medium text-slate-800 border border-slate-200 transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-        </svg>
-        {copyFeedback ? 'Slika kopirana!' : isCopying ? 'Kopiranje...' : 'Kopiraj sliku'}
-      </button>
-
-      {/* Dimenzije hale */}
-      <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-3 rounded-lg shadow-md text-sm border border-slate-200">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Dimenzije hale</p>
-        <p className="text-base font-bold text-slate-800">
-          {length} × {width} × {height} m
-        </p>
-        <p className="text-xs text-slate-500 mt-1">D × S × V</p>
+      {/* Kompaktna legenda + kopiranje u jednom panelu */}
+      <div className="absolute top-3 left-3 right-3 z-20 pointer-events-none">
+        <div className="pointer-events-auto inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 max-w-full bg-white/92 backdrop-blur-sm px-2.5 py-1.5 rounded-lg shadow-md border border-slate-200 text-[11px] sm:text-xs text-slate-700">
+          <span className="inline-flex items-center gap-1 shrink-0">
+            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.post }} />
+            Stubovi {brojStubova}
+          </span>
+          <span className="text-slate-300 hidden sm:inline">·</span>
+          <span className="inline-flex items-center gap-1 shrink-0">
+            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.binderMain }} />
+            Binderi {brojBindera}
+          </span>
+          <span className="text-slate-300 hidden sm:inline">·</span>
+          <span className="inline-flex items-center gap-1 shrink-0">
+            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.purlin }} />
+            Rožnjače {brojRoznjacaPoBinderu}/b · {ukupanBrojRoznjaca} m
+          </span>
+          <span className="hidden sm:inline text-slate-200 mx-0.5">|</span>
+          <button
+            type="button"
+            onClick={handleCopyToClipboard}
+            disabled={isCopying}
+            data-capture-ignore
+            className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 disabled:opacity-60 border border-slate-200 transition-colors sm:ml-0 ml-auto"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span className="whitespace-nowrap">
+              {copyFeedback ? 'Kopirano!' : isCopying ? '...' : 'Kopiraj'}
+            </span>
+          </button>
+        </div>
       </div>
 
-      {/* Info overlay */}
-      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-md text-sm">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: VIS_COLORS.post }} />
-          <span>Stubovi ({brojStubova})</span>
-        </div>
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: VIS_COLORS.binderMain }} />
-          <span>Binderi ({brojBindera})</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: VIS_COLORS.purlin }} />
-          <span>Rožnjače ({brojRoznjacaPoBinderu} po binderu, {ukupanBrojRoznjaca} m ukupno)</span>
-        </div>
+      {/* Dimenzije hale */}
+      <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-10 bg-white/90 backdrop-blur-sm px-3 py-2 sm:px-4 sm:py-3 rounded-lg shadow-md text-xs sm:text-sm border border-slate-200">
+        <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Dimenzije hale</p>
+        <p className="text-sm sm:text-base font-bold text-slate-800">
+          {length} × {width} × {height} m
+        </p>
+        <p className="text-[10px] sm:text-xs text-slate-500 mt-1">D × S × V</p>
       </div>
     </div>
   )
