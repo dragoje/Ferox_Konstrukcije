@@ -659,33 +659,38 @@ export default function Shed3DVisualization({
 
       {/* Kompaktna legenda + kopiranje u jednom panelu */}
       <div className="absolute top-3 left-3 right-3 z-20 pointer-events-none">
-        <div className="pointer-events-auto inline-flex flex-wrap items-center gap-x-2.5 gap-y-1 max-w-full bg-white/92 backdrop-blur-sm px-2.5 py-1.5 rounded-lg shadow-md border border-slate-200 text-[11px] sm:text-xs text-slate-700">
-          <span className="inline-flex items-center gap-1 shrink-0">
-            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.post }} />
-            Stubovi {brojStubova}
-          </span>
-          <span className="text-slate-300 hidden sm:inline">·</span>
-          <span className="inline-flex items-center gap-1 shrink-0">
-            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.binderMain }} />
-            Binderi {brojBindera}
-          </span>
-          <span className="text-slate-300 hidden sm:inline">·</span>
-          <span className="inline-flex items-center gap-1 shrink-0">
-            <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.purlin }} />
-            Rožnjače {brojRoznjacaPoBinderu}/b · {ukupanBrojRoznjaca} m
-          </span>
-          <span className="hidden sm:inline text-slate-200 mx-0.5">|</span>
+        <div className="pointer-events-auto flex items-center gap-2 max-w-full bg-white/92 backdrop-blur-sm px-2.5 py-1.5 rounded-lg shadow-md border border-slate-200 text-[11px] sm:text-xs text-slate-700">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0 flex-1">
+            <span className="inline-flex items-center gap-1 shrink-0 leading-none">
+              <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.post }} />
+              <span>Stubovi <span className="tabular-nums">{brojStubova}</span></span>
+            </span>
+            <span className="text-slate-300 hidden sm:inline leading-none">·</span>
+            <span className="inline-flex items-center gap-1 shrink-0 leading-none">
+              <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.binderMain }} />
+              <span>Binderi <span className="tabular-nums">{brojBindera}</span></span>
+            </span>
+            <span className="text-slate-300 hidden sm:inline leading-none">·</span>
+            <span className="inline-flex items-center gap-1 shrink-0 leading-none">
+              <span className="w-2.5 h-2.5 rounded shrink-0" style={{ backgroundColor: VIS_COLORS.purlin }} />
+              <span>
+                Rožnjače <span className="tabular-nums">{brojRoznjacaPoBinderu}</span>/b ·{' '}
+                <span className="tabular-nums">{ukupanBrojRoznjaca}</span> m
+              </span>
+            </span>
+          </div>
+          <span className="hidden sm:inline text-slate-200 shrink-0">|</span>
           <button
             type="button"
             onClick={handleCopyToClipboard}
             disabled={isCopying}
             data-capture-ignore
-            className="inline-flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 disabled:opacity-60 border border-slate-200 transition-colors sm:ml-0 ml-auto"
+            className="inline-flex items-center justify-center gap-1 shrink-0 w-[5.75rem] h-6 rounded-md font-medium text-slate-800 bg-slate-50 hover:bg-slate-100 disabled:opacity-60 border border-slate-200 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
-            <span className="whitespace-nowrap">
+            <span className="w-[3.5rem] text-center whitespace-nowrap">
               {copyFeedback ? 'Kopirano!' : isCopying ? '...' : 'Kopiraj'}
             </span>
           </button>
