@@ -94,14 +94,21 @@ export default function Kalkulator() {
   const [cenaLimaPoKg, setCenaLimaPoKg] = useState(0)
   const [cenaPanelPoM2, setCenaPanelPoM2] = useState(0)
   const [copiedNotification, setCopiedNotification] = useState(false)
-  const [dimenzijeInput, setDimenzijeInput] = useState('6x5x2.5')
+  const [dimenzijeInput, setDimenzijeInput] = useState('')
   const [dimenzijeError, setDimenzijeError] = useState(null)
+  const [dimenzijeConfirmed, setDimenzijeConfirmed] = useState(false)
 
   const applyDimenzije = (input) => {
+    const trimmed = input.trim()
+    if (!trimmed) {
+      setDimenzijeError(null)
+      setDimenzijeInput('')
+      return
+    }
     const result = parseDimenzije(input)
     if (result.error) {
       setDimenzijeError(result.error)
-      setDimenzijeInput(formatDimenzije(length, width, height))
+      setDimenzijeInput(dimenzijeConfirmed ? formatDimenzije(length, width, height) : '')
       return
     }
     const { length: newLength, width: newWidth, height: newHeight } = result
@@ -111,6 +118,7 @@ export default function Kalkulator() {
     setHeight(newHeight)
     setDimenzijeInput(formatDimenzije(newLength, newWidth, newHeight))
     setDimenzijeError(null)
+    setDimenzijeConfirmed(true)
   }
 
   const handleDimenzijeBlur = () => applyDimenzije(dimenzijeInput)
@@ -640,11 +648,11 @@ export default function Kalkulator() {
             />
             {dimenzijeError ? (
               <p className="text-xs text-red-600 mt-1">{dimenzijeError}</p>
-            ) : (
+            ) : dimenzijeConfirmed ? (
               <p className="text-xs text-gray-600 mt-1">
                 Dužina: <strong>{length}m</strong> · Širina: <strong>{width}m</strong> · Visina: <strong>{height}m</strong>
               </p>
-            )}
+            ) : null}
           </label>
           <label className="flex flex-col text-sm">
             Pad krova
