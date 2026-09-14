@@ -58,6 +58,7 @@ export default function StuboviPlanView({
 
   const title = `POZICIJE STUBOVA – KONSTRUKCIJA ${formatMeters(length)}x${formatMeters(width)}m (CENTRALNE OSE)`
 
+  // Offscreen klon pune širine — na telefonu je UI isečen, ali kopija mora biti cela
   const captureFullImage = async () => {
     if (!captureRef.current) return null
 
@@ -65,15 +66,58 @@ export default function StuboviPlanView({
       requestAnimationFrame(() => requestAnimationFrame(resolve))
     })
 
-    const canvas = await html2canvas(captureRef.current, {
-      backgroundColor: '#ffffff',
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      ignoreElements: (el) => el.hasAttribute('data-capture-ignore'),
+    const source = captureRef.current
+    const clone = source.cloneNode(true)
+    const captureWidth = Math.max(source.scrollWidth, 900)
+
+    const host = document.createElement('div')
+    host.setAttribute('aria-hidden', 'true')
+    host.style.cssText = [
+      'position:fixed',
+      'left:-10000px',
+      'top:0',
+      'z-index:-1',
+      'pointer-events:none',
+      'opacity:1',
+      'background:#ffffff',
+      `width:${captureWidth}px`,
+    ].join(';')
+
+    clone.style.width = `${captureWidth}px`
+    clone.style.maxWidth = 'none'
+    clone.style.overflow = 'visible'
+
+    clone.querySelectorAll('[data-plan-scroll]').forEach((el) => {
+      el.style.overflow = 'visible'
+      el.style.width = '100%'
     })
 
-    return canvas.toDataURL('image/png')
+    clone.querySelectorAll('svg').forEach((svg) => {
+      svg.style.width = '100%'
+      svg.style.minWidth = '0'
+      svg.style.height = 'auto'
+      svg.removeAttribute('class')
+    })
+
+    host.appendChild(clone)
+    document.body.appendChild(host)
+
+    try {
+      const canvas = await html2canvas(clone, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        width: captureWidth,
+        windowWidth: captureWidth,
+        scrollX: 0,
+        scrollY: 0,
+        ignoreElements: (el) => el.hasAttribute('data-capture-ignore'),
+      })
+      return canvas.toDataURL('image/png')
+    } finally {
+      host.remove()
+    }
   }
 
   const handleCopyToClipboard = async () => {
@@ -127,7 +171,7 @@ export default function StuboviPlanView({
           </p>
         </div>
 
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-x-auto" data-plan-scroll>
           <svg
             viewBox={`0 0 ${svgW} ${svgH}`}
             className="w-full h-auto min-w-[680px]"
