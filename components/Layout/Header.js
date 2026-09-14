@@ -57,6 +57,16 @@ export default function Header() {
                   Kalkulator
                 </Link>
                 <Link
+                  href="/crtez"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    pathname === '/crtez'
+                      ? 'bg-red-700 text-white'
+                      : 'text-red-700 hover:bg-red-50'
+                  }`}
+                >
+                  Crtež
+                </Link>
+                <Link
                   href="/admin/projekti"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     pathname === '/admin/projekti'
@@ -130,6 +140,17 @@ export default function Header() {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Kalkulator
+                </Link>
+                <Link
+                  href="/crtez"
+                  className={`block px-4 py-2 rounded-md text-sm font-medium mt-2 ${
+                    pathname === '/crtez'
+                      ? 'bg-red-700 text-white'
+                      : 'text-red-700 hover:bg-red-50'
+                  }`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Crtež
                 </Link>
                 <Link
                   href="/admin/projekti"
