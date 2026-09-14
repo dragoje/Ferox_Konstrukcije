@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import jsPDF from 'jspdf'
 import Shed3DVisualization from './Shed3DVisualization'
+import StuboviPlanView from './StuboviPlanView'
 import { STUBOVI_PO_DUZINI, BINDERI_PO_SIRINI, ROZNJACE, ANKER_PLOCA_CENA, ANKER_SRAFO_CENA, formatAnkerSrafOpis } from '@/data/konstrukcijaData'
 import { addProjekat } from '@/lib/projektiStorage'
 
@@ -680,20 +681,27 @@ export default function Kalkulator() {
               </svg>
               {copiedNotification ? 'Kopirano!' : 'Kopiraj ponudu'}
             </button>
-            <div className="flex w-full max-w-md gap-2">
+            <div className="flex w-full max-w-xl gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => scrollToSection('sekcija-ponuda')}
-                className="flex-1 px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                className="flex-1 min-w-[120px] px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Idi na ponudu
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSection('sekcija-3d')}
-                className="flex-1 px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                className="flex-1 min-w-[120px] px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Idi na 3D prikaz
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('sekcija-plan-stubova')}
+                className="flex-1 min-w-[120px] px-3 py-2 text-sm font-medium text-gray-800 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Plan stubova
               </button>
             </div>
           </div>
@@ -1156,6 +1164,20 @@ export default function Kalkulator() {
             onCaptureReady={(fn) => { capture3DRef.current = fn }}
           />
         </div>
+      </section>
+
+      {/* Ptičiji prikaz stubova */}
+      <section id="sekcija-plan-stubova" className="mb-4 p-4 rounded-lg shadow-md scroll-mt-4" style={{ backgroundColor: '#F0F0F0' }}>
+        <h2 className="text-lg font-semibold mb-2">Pozicije stubova (ptičiji prikaz)</h2>
+        <p className="text-sm text-gray-600 mb-3">
+          Tehnički crtež rasporeda stubova po središnjim osama — ažurira se sa dimenzijama, brojem bindera i profilom stuba.
+        </p>
+        <StuboviPlanView
+          length={length}
+          width={width}
+          brojBindera={calculations.brojBindera}
+          stubTip={selectedStub?.tip || '100x100'}
+        />
       </section>
 
       {isAdmin && (
